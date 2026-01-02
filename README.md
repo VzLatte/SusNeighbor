@@ -1,6 +1,6 @@
 # 🕵️‍♂️ Suspicious Neighbor: Protocol Deduction Engine
 
-![Suspicious Neighbor](./public/banner.png) 
+![Suspicious Neighbor](Public/banner.png) 
 ## 🚀 The Vision
 **Suspicious Neighbor** is a high-stakes, AI-powered social deduction PWA designed for mobile-first party play. It bridges the gap between classic "hidden role" games and modern Generative AI, creating infinite replayability through dynamic mission generation.
 

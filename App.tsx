@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Role, GameCategory, PowerUp, MainMode } from './types';
@@ -19,6 +18,42 @@ import Leaderboard from './components/Leaderboard';
 import AuctionBidding from './components/AuctionBidding';
 import VirusPurgeGuess from './components/VirusPurgeGuess';
 import MimicGuess from './components/MimicGuess';
+
+const NotificationToast: React.FC<{ notification: { message: string, type: 'error' | 'info' | 'warning' }, onClose: () => void }> = ({ notification, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const bgStyles = {
+    error: 'bg-red-600/90 border-red-500',
+    warning: 'bg-amber-600/90 border-amber-500',
+    info: 'bg-indigo-600/90 border-indigo-500'
+  };
+
+  const icons = {
+    error: '✕',
+    warning: '⚠',
+    info: 'ℹ'
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 50 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      exit={{ opacity: 0, scale: 0.95 }}
+      className={`fixed bottom-6 left-6 right-6 z-[200] max-w-sm mx-auto p-4 rounded-2xl border-2 backdrop-blur-md shadow-2xl flex items-start gap-3 ${bgStyles[notification.type]}`}
+    >
+      <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0 font-black text-sm">
+        {icons[notification.type]}
+      </div>
+      <div className="flex-1 text-xs font-black uppercase tracking-tight text-white leading-tight">
+        {notification.message}
+      </div>
+      <button onClick={onClose} className="text-white/60 hover:text-white font-black px-1">✕</button>
+    </motion.div>
+  );
+};
 
 const DynamicBackground: React.FC = () => {
   // Generate some random floating particles
@@ -43,7 +78,6 @@ const DynamicBackground: React.FC = () => {
             height: p.size,
             left: `${p.x}%`,
             top: `${p.y}%`,
-            // Fix: Use p.id since i is not in scope here. p.id was assigned the value of i during array mapping.
             background: p.id % 2 === 0 ? 'radial-gradient(circle, #4f46e5, transparent)' : 'radial-gradient(circle, #ec4899, transparent)',
             filter: 'blur(40px)',
           }}
@@ -97,8 +131,6 @@ const App: React.FC = () => {
 
   // Music Controller
   useEffect(() => {
-    // Note: Browser audio policy usually requires a user interaction first.
-    // Most users will click "Initialize Mission" or a mode button immediately.
     if (!game.musicEnabled) {
       soundService.stopBGM();
       return;
@@ -127,15 +159,28 @@ const App: React.FC = () => {
         />
         
         <main className="flex-1 relative flex flex-col max-w-md mx-auto w-full p-6 overflow-y-auto custom-scrollbar">
-          {game.isAiLoading && (
-              <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center space-y-6 text-center p-8 animate-in fade-in duration-300">
-                  <div className="w-20 h-20 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-                  <div className="space-y-2">
-                      <h3 className="text-xl font-black text-indigo-400 uppercase tracking-tighter">Syncing Mission Intel</h3>
-                      <p className="text-slate-500 text-sm font-bold uppercase tracking-widest animate-pulse">Neural Link In Progress...</p>
-                  </div>
-              </div>
-          )}
+          <AnimatePresence>
+            {game.notification && (
+              <NotificationToast notification={game.notification} onClose={() => game.setNotification(null)} />
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {game.isAiLoading && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center space-y-6 text-center p-8"
+                >
+                    <div className="w-20 h-20 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+                    <div className="space-y-2">
+                        <h3 className="text-xl font-black text-indigo-400 uppercase tracking-tighter">Syncing Mission Intel</h3>
+                        <p className="text-slate-500 text-sm font-bold uppercase tracking-widest animate-pulse">Neural Link In Progress...</p>
+                    </div>
+                </motion.div>
+            )}
+          </AnimatePresence>
 
           <AnimatePresence mode="wait">
             <motion.div 

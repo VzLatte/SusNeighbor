@@ -36,6 +36,7 @@ export const useGameState = () => {
   const [mainMode, setMainMode] = useState<MainMode>(MainMode.TERMS);
   const [useAiMissions, setUseAiMissions] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [notification, setNotification] = useState<{ message: string, type: 'error' | 'info' | 'warning' } | null>(null);
 
   // Advanced Role Config
   const [roleDistributionMode, setRoleDistributionMode] = useState<RoleDistributionMode>(RoleDistributionMode.STANDARD);
@@ -194,6 +195,7 @@ export const useGameState = () => {
   }, [allTimePoints, players, playerCredits, mainMode, includeHints]);
 
   const handleStart = async () => {
+    setNotification(null);
     if (soundEnabled) soundService.playTransition();
     setIsAiLoading(true);
 
@@ -217,9 +219,13 @@ export const useGameState = () => {
               realWord = aiPrompt.realWord;
               const noiseData = await generateVirusNoiseWords(realWord, virusWord);
               if (noiseData?.noiseWords) noiseWords = noiseData.noiseWords;
-            } else throw new Error("AI Null");
-          } catch (e) {
+            } else throw new Error("Connection Timeout or Rate Limit");
+          } catch (e: any) {
             console.warn("AI Failure, using fallback", e);
+            setNotification({ 
+              message: "Neural Link unstable. Using local Standard Library fallback.", 
+              type: 'warning' 
+            });
             const vs = virusSets[0];
             virusWord = vs.words[Math.floor(Math.random() * vs.words.length)];
             realWord = wordSets[0].pairs[0].wordA;
@@ -305,6 +311,8 @@ export const useGameState = () => {
       if (useAiMissions) {
         try {
           const aiPrompt = await generateAIPrompt(mainMode);
+          if (!aiPrompt) throw new Error("AI Null Response");
+          
           if (mainMode === MainMode.TERMS || mainMode === MainMode.PAIR) {
             wordA = aiPrompt?.wordA || wordA;
             wordB = aiPrompt?.wordB || wordB;
@@ -315,8 +323,12 @@ export const useGameState = () => {
             location = aiPrompt?.location || location;
             catchRule = aiPrompt?.catch || catchRule;
           }
-        } catch (e) {
-          console.warn("AI Mission Gen Failed, fallback engaged.");
+        } catch (e: any) {
+          console.warn("AI Mission Gen Failed, fallback engaged.", e);
+          setNotification({ 
+            message: "Neural Link severed. Mission parameters sourced from local archives.", 
+            type: 'warning' 
+          });
         }
       } else {
         if (mainMode === MainMode.TERMS || mainMode === MainMode.PAIR) {
@@ -380,9 +392,12 @@ export const useGameState = () => {
       setPlayers(finalPlayers);
       setCurrentPlayerIndex(0);
       setPhase(isAuctionActive ? 'AUCTION_REVEAL' : 'REVEAL_TRANSITION');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Critical Start Error:", error);
-      alert("System Error during initialization. Please check network and try again.");
+      setNotification({ 
+        message: "Critical Deployment Failure. System link inaccessible.", 
+        type: 'error' 
+      });
     } finally {
       setIsAiLoading(false);
     }
@@ -395,6 +410,7 @@ export const useGameState = () => {
     setCurrentPlayerIndex(0);
     setVirusPoints(0);
     setIsAiLoading(false);
+    setNotification(null);
   };
 
   return {
@@ -417,6 +433,7 @@ export const useGameState = () => {
     soundEnabled, setSoundEnabled, musicEnabled, setMusicEnabled, bgAnimationEnabled, setBgAnimationEnabled,
     meetingDuration, setMeetingDuration,
     lastStandDuration, setLastStandDuration, allTimePoints, gameHistory, playerCredits,
+    notification, setNotification,
     // Actions
     handleStart, resetGame, awardPoints, clearStats,
     handleDetectionTrigger: () => {
