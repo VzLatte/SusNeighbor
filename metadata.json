@@ -1,5 +1,24 @@
 {
   "name": "Suspicious Neighbor",
-  "description": "A high-stakes social deduction game where neighbors collaborate on a project, while imposters try to blend in with similar ideas, and Mr. White stays completely in the dark.",
-  "requestFramePermissions": []
+  "short_name": "SusNeighbor",
+  "description": "A social deduction party game",
+  "start_url": "https://sus-neighbor.vercel.app/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "en",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
