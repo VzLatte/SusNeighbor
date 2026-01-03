@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Role, GameCategory, PowerUp, MainMode } from './types';
@@ -56,10 +57,9 @@ const NotificationToast: React.FC<{ notification: { message: string, type: 'erro
 };
 
 const DynamicBackground: React.FC = () => {
-  // Generate some random floating particles
-  const particles = Array.from({ length: 15 }).map((_, i) => ({
+  const particles = Array.from({ length: 12 }).map((_, i) => ({
     id: i,
-    size: Math.random() * 150 + 50,
+    size: Math.random() * 300 + 200,
     x: Math.random() * 100,
     y: Math.random() * 100,
     duration: Math.random() * 20 + 20,
@@ -67,23 +67,41 @@ const DynamicBackground: React.FC = () => {
   }));
 
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#020617]">
-      {/* Moving Ambient Blobs */}
+    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#01030a]">
+      {/* Blueprint Grid - More visible and detailed */}
+      <div className="absolute inset-0" 
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(79, 70, 229, 0.4) 1.5px, transparent 1.5px), 
+            linear-gradient(90deg, rgba(79, 70, 229, 0.4) 1.5px, transparent 1.5px),
+            linear-gradient(rgba(79, 70, 229, 0.1) 1px, transparent 1px), 
+            linear-gradient(90deg, rgba(79, 70, 229, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '80px 80px, 80px 80px, 20px 20px, 20px 20px',
+          maskImage: 'radial-gradient(ellipse at center, black, transparent 95%)',
+          WebkitMaskImage: 'radial-gradient(ellipse at center, black, transparent 95%)',
+          animation: 'backgroundMove 120s linear infinite'
+        }} 
+      />
+
+      {/* Moving Ambient Nebulas - Significantly more transparent and lighter */}
       {particles.map((p) => (
         <motion.div
           key={p.id}
-          className="absolute rounded-full mix-blend-screen opacity-[0.07]"
+          className="absolute rounded-full mix-blend-screen opacity-[0.12]"
           style={{
             width: p.size,
             height: p.size,
             left: `${p.x}%`,
             top: `${p.y}%`,
-            background: p.id % 2 === 0 ? 'radial-gradient(circle, #4f46e5, transparent)' : 'radial-gradient(circle, #ec4899, transparent)',
-            filter: 'blur(40px)',
+            background: p.id % 2 === 0 
+              ? 'radial-gradient(circle, rgba(79, 70, 229, 0.8), transparent 70%)' 
+              : 'radial-gradient(circle, rgba(236, 72, 153, 0.8), transparent 70%)',
+            filter: 'blur(80px)',
           }}
           animate={{
-            x: [0, 50, -50, 0],
-            y: [0, -50, 50, 0],
+            x: [0, 100, -100, 0],
+            y: [0, -100, 100, 0],
             scale: [1, 1.2, 0.8, 1],
           }}
           transition={{
@@ -95,31 +113,24 @@ const DynamicBackground: React.FC = () => {
         />
       ))}
 
-      {/* Techno Grid */}
-      <div className="absolute inset-0" 
-        style={{
-          backgroundImage: `linear-gradient(rgba(79, 70, 229, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(79, 70, 229, 0.1) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px',
-          maskImage: 'radial-gradient(ellipse at center, black, transparent 80%)',
-          WebkitMaskImage: 'radial-gradient(ellipse at center, black, transparent 80%)',
-          animation: 'backgroundMove 60s linear infinite'
-        }} 
-      />
+      {/* Global Vignette */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#01040f] via-transparent to-[#01040f] opacity-80" />
 
       {/* Scanline Effect */}
-      <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-indigo-500/10 to-transparent"
-        style={{ animation: 'scanline 12s ease-in-out infinite' }}
+      <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-indigo-400/20 to-transparent"
+        style={{ animation: 'scanline 10s linear infinite' }}
       />
       
       <style>{`
         @keyframes backgroundMove {
-          from { background-position: 0 0; }
-          to { background-position: 600px 600px; }
+          from { background-position: 0 0, 0 0, 0 0, 0 0; }
+          to { background-position: 800px 800px, 800px 800px, 800px 800px, 800px 800px; }
         }
         @keyframes scanline {
-          0% { top: -10%; opacity: 0; }
-          50% { opacity: 1; }
-          100% { top: 110%; opacity: 0; }
+          0% { transform: translateY(-10vh); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateY(110vh); opacity: 0; }
         }
       `}</style>
     </div>
@@ -136,7 +147,16 @@ const App: React.FC = () => {
       return;
     }
 
-    if (game.phase === 'HOME' || game.phase === 'SETUP' || game.phase === 'LEADERBOARD') {
+    // Don't interrupt if the secret track is active
+    if (soundService.getBGMType() === 'SECRET') return;
+
+    const menuPhases = [
+      'HOME', 'SETUP', 'LEADERBOARD', 'SETTINGS', 'HELP', 
+      'REVEAL_TRANSITION', 'REVEAL', 'AUCTION_REVEAL', 
+      'AUCTION_TRANSITION', 'AUCTION_BIDDING', 'STARTING_PLAYER_ANNOUNCEMENT'
+    ];
+
+    if (menuPhases.includes(game.phase)) {
       soundService.startBGM('MENU');
     } else if (game.phase === 'MEETING') {
       soundService.startBGM('MEETING');
@@ -238,10 +258,18 @@ const App: React.FC = () => {
               )}
 
               {game.phase === 'REVEAL' && (
-                <RevealCard player={game.players[game.currentPlayerIndex]} gameMode={game.gameMode} mainMode={game.mainMode} soundEnabled={game.soundEnabled} context={game.gameContext!} onNext={() => { 
+                <RevealCard 
+                  player={game.players[game.currentPlayerIndex]} 
+                  gameMode={game.gameMode} 
+                  mainMode={game.mainMode} 
+                  soundEnabled={game.soundEnabled} 
+                  slotMachineEnabled={game.slotMachineEnabled}
+                  context={game.gameContext!} 
+                  onNext={() => { 
                     if (game.currentPlayerIndex < game.playerCount - 1) { game.setCurrentPlayerIndex(game.currentPlayerIndex + 1); game.setPhase('REVEAL_TRANSITION'); } 
                     else game.setPhase('STARTING_PLAYER_ANNOUNCEMENT'); 
-                }} />
+                  }} 
+                />
               )}
 
               {game.phase === 'STARTING_PLAYER_ANNOUNCEMENT' && (
@@ -260,18 +288,29 @@ const App: React.FC = () => {
                   players={game.players} 
                   onSelect={(selected) => { 
                     game.setLastEliminatedPlayer(selected); 
+                    const hasActiveMimic = game.players.some(p => p.role === Role.MIMIC && p.id !== selected.id);
+
                     if (selected.role === Role.ANARCHIST) { 
                       game.setOutcome({ winner: 'ANARCHIST', reason: `${selected.name} was the Anarchist!` }); 
                       game.awardPoints('ANARCHIST', 'Anarchist win'); 
                       game.setPhase('RESULTS'); 
                     } 
+                    else if (selected.role === Role.MIMIC) {
+                      // Mimic was caught, they get one final guess
+                      game.setPhase('MIMIC_GUESS');
+                    }
                     else if (selected.role === Role.IMPOSTER) {
                       if (game.gameContext?.hasOracleActive) {
                         game.setPhase('LAST_STAND');
                       } else {
-                        game.setOutcome({ winner: 'NEIGHBORS', reason: `${selected.name} was the Imposter! Neighbors secure the win.` });
-                        game.awardPoints('NEIGHBORS', 'Threat removed');
-                        game.setPhase('RESULTS');
+                        // Imposter caught, but does a Mimic steal?
+                        if (hasActiveMimic) {
+                            game.setPhase('MIMIC_GUESS');
+                        } else {
+                            game.setOutcome({ winner: 'NEIGHBORS', reason: `${selected.name} was the Imposter! Neighbors secure the win.` });
+                            game.awardPoints('NEIGHBORS', 'Threat removed');
+                            game.setPhase('RESULTS');
+                        }
                       }
                     }
                     else if (selected.role === Role.MR_WHITE) {
@@ -285,8 +324,55 @@ const App: React.FC = () => {
                   }} 
                 />
               )}
-              {game.phase === 'LAST_STAND' && <LastStand player={game.lastEliminatedPlayer!} allPlayers={game.players} realProject={game.gameContext!.realProject} distractors={game.gameContext!.distractors} duration={game.lastStandDuration} mainMode={game.mainMode} onResult={(res) => { if (res === 'PROJECT_CORRECT' || res === 'ORACLE_CORRECT') game.setOutcome({ winner: 'IMPOSTERS', reason: 'Target identified.' }); else { game.setOutcome({ winner: 'NEIGHBORS', reason: 'Failed identification.' }); game.awardPoints('NEIGHBORS', 'Civ victory'); } game.setPhase('RESULTS'); }} soundEnabled={game.soundEnabled} hasOracleInPlay={game.gameContext!.hasOracleActive} />}
-              {game.phase === 'MIMIC_GUESS' && <MimicGuess player={game.players.find(p => p.role === Role.MIMIC)!} allPlayers={game.players} imposters={game.players.filter(p => p.role === Role.IMPOSTER || p.role === Role.MR_WHITE)} realProject={game.gameContext!.realProject} distractors={game.gameContext!.distractors} mainMode={game.mainMode} soundEnabled={game.soundEnabled} onResult={(correct) => { if (correct) { game.setOutcome({ winner: 'MIMIC', reason: 'Rogue operative hijacked the mission!' }); game.awardPoints('MIMIC', 'Mimic steal'); } else { game.setOutcome({ winner: 'NEIGHBORS', reason: 'Rogue mimic failed their heist.' }); game.awardPoints('NEIGHBORS', 'Neighbors hold firm'); } game.setPhase('RESULTS'); }} />}
+              {game.phase === 'LAST_STAND' && (
+                <LastStand 
+                    player={game.lastEliminatedPlayer!} 
+                    allPlayers={game.players} 
+                    realProject={game.gameContext!.realProject} 
+                    distractors={game.gameContext!.distractors} 
+                    duration={game.lastStandDuration} 
+                    mainMode={game.mainMode} 
+                    onResult={(res) => { 
+                        if (res === 'PROJECT_CORRECT' || res === 'ORACLE_CORRECT') {
+                            game.setOutcome({ winner: 'IMPOSTERS', reason: 'Target identified.' }); 
+                            game.setPhase('RESULTS');
+                        } else { 
+                            // Last Stand failed, Neighbors should win, but check for Mimic steal
+                            const hasActiveMimic = game.players.some(p => p.role === Role.MIMIC && p.id !== game.lastEliminatedPlayer?.id);
+                            if (hasActiveMimic) {
+                                game.setPhase('MIMIC_GUESS');
+                            } else {
+                                game.setOutcome({ winner: 'NEIGHBORS', reason: 'Failed identification. Neighbors hold the line.' }); 
+                                game.awardPoints('NEIGHBORS', 'Civ victory'); 
+                                game.setPhase('RESULTS'); 
+                            }
+                        } 
+                    }} 
+                    soundEnabled={game.soundEnabled} 
+                    hasOracleInPlay={game.gameContext!.hasOracleActive} 
+                />
+              )}
+              {game.phase === 'MIMIC_GUESS' && (
+                <MimicGuess 
+                    player={game.players.find(p => p.role === Role.MIMIC)!} 
+                    allPlayers={game.players} 
+                    imposters={game.players.filter(p => p.role === Role.IMPOSTER || p.role === Role.MR_WHITE)} 
+                    realProject={game.gameContext!.realProject} 
+                    distractors={game.gameContext!.distractors} 
+                    mainMode={game.mainMode} 
+                    soundEnabled={game.soundEnabled} 
+                    onResult={(correct) => { 
+                        if (correct) { 
+                            game.setOutcome({ winner: 'MIMIC', reason: 'Rogue operative hijacked the mission!' }); 
+                            game.awardPoints('MIMIC', 'Mimic steal'); 
+                        } else { 
+                            game.setOutcome({ winner: 'NEIGHBORS', reason: 'Rogue mimic failed their heist.' }); 
+                            game.awardPoints('NEIGHBORS', 'Neighbors hold firm'); 
+                        } 
+                        game.setPhase('RESULTS'); 
+                    }} 
+                />
+              )}
               {game.phase === 'VIRUS_GUESS' && <VirusPurgeGuess context={game.gameContext!} onResult={game.handleVirusGuess} soundEnabled={game.soundEnabled} />}
               {game.phase === 'RESULTS' && game.outcome && <Results outcome={game.outcome as any} players={game.players} allTimePoints={game.allTimePoints} onReset={game.resetGame} />}
               {game.phase === 'SETTINGS' && <Settings {...game} onBack={() => game.setPhase('SETUP')} onSave={(ns, ni, nw, nv) => { game.setScenarioSets(ns); game.setInquestSets(ni); game.setWordSets(nw); game.setVirusSets(nv); }} />}

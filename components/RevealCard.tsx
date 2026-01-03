@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+
+import React, { useState, useEffect } from 'react';
+import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import { Player, Role, GameContext, GameMode, MainMode } from '../types';
 import { soundService } from '../services/soundService';
 
@@ -8,12 +9,73 @@ interface RevealCardProps {
   gameMode: GameMode;
   mainMode: MainMode;
   soundEnabled: boolean;
+  slotMachineEnabled: boolean;
   onNext: () => void;
   context: GameContext;
 }
 
-const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, soundEnabled, onNext, context }) => {
+const ALL_ROLES = [Role.NEIGHBOR, Role.IMPOSTER, Role.MR_WHITE, Role.ANARCHIST, Role.MIMIC, Role.ORACLE];
+
+const SlotMachine: React.FC<{ targetRole: Role, onFinish: () => void, soundEnabled: boolean }> = ({ targetRole, onFinish, soundEnabled }) => {
+  const [displayRole, setDisplayRole] = useState(ALL_ROLES[0]);
+  const [isDone, setIsDone] = useState(false);
+
+  useEffect(() => {
+    let count = 0;
+    const totalSteps = 25;
+    const baseSpeed = 50;
+
+    const tick = () => {
+      if (count >= totalSteps) {
+        setDisplayRole(targetRole);
+        setIsDone(true);
+        if (soundEnabled) soundService.playLockIn();
+        setTimeout(onFinish, 800);
+        return;
+      }
+
+      // Randomly cycle roles
+      const nextRole = ALL_ROLES[Math.floor(Math.random() * ALL_ROLES.length)];
+      setDisplayRole(nextRole);
+      if (soundEnabled) soundService.playTick();
+
+      count++;
+      // Progressive slowdown
+      const nextDelay = baseSpeed + (Math.pow(count / totalSteps, 3) * 300);
+      setTimeout(tick, nextDelay);
+    };
+
+    tick();
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full space-y-4">
+      <div className="relative w-full h-32 flex items-center justify-center overflow-hidden bg-slate-950 rounded-2xl border-2 border-indigo-500/50 shadow-[inset_0_0_20px_rgba(79,70,229,0.3)]">
+        <motion.div
+          key={displayRole}
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -50, opacity: 0 }}
+          className={`text-3xl font-black uppercase tracking-tighter ${isDone ? 'text-indigo-400 scale-110 shadow-indigo-500/20' : 'text-slate-600'}`}
+          style={{ textShadow: isDone ? '0 0 15px rgba(129, 140, 248, 0.6)' : 'none' }}
+        >
+          {displayRole}
+        </motion.div>
+        
+        {/* Slot machine glass glare overlay */}
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-white/5 via-transparent to-black/20" />
+      </div>
+      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500/50 animate-pulse">
+        {isDone ? 'IDENTITY CONFIRMED' : 'DECRYPTING NEURAL LINK...'}
+      </p>
+    </div>
+  );
+};
+
+const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, soundEnabled, slotMachineEnabled, onNext, context }) => {
   const [hasRevealedOnce, setHasRevealedOnce] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [animationComplete, setAnimationComplete] = useState(false);
   
   const y = useMotionValue(0);
   const peekY = useTransform(y, [0, -400], [0, -400], { clamp: true });
@@ -21,8 +83,13 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
 
   const handleDragEnd = (_: any, info: any) => {
     if (info.offset.y < -100) {
-      if (!hasRevealedOnce && soundEnabled) {
-        soundService.playReveal();
+      if (!hasRevealedOnce) {
+        if (slotMachineEnabled) {
+          setIsSpinning(true);
+        } else {
+          setAnimationComplete(true);
+        }
+        if (soundEnabled) soundService.playReveal();
       }
       setHasRevealedOnce(true);
     }
@@ -55,48 +122,69 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
       <div className="w-full aspect-[3/4] max-w-[280px] relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-slate-800 bg-slate-900">
         
         <div className="absolute inset-0 p-6 flex flex-col pointer-events-none">
-          <span className={`text-[10px] font-black uppercase tracking-widest mb-1 ${theme.text}`}>
-            Clearance: {displayedRole.toUpperCase()}
-          </span>
-          <h3 className="text-3xl font-black mb-2 leading-none text-white">{displayedRole}</h3>
-          
-          <div className="space-y-4 flex-1">
-            <div className="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/50">
-               <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Directives</p>
-               <p className="text-[10px] leading-relaxed text-slate-300 font-bold">{theme.desc}</p>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase font-black tracking-widest text-slate-500">
-                {player.role === Role.ORACLE ? 'TARGET IDENTIFIED' : 'Mission Intel'}
-              </label>
+          {isSpinning && !animationComplete ? (
+            <SlotMachine 
+              targetRole={displayedRole} 
+              soundEnabled={soundEnabled} 
+              onFinish={() => {
+                setIsSpinning(false);
+                setAnimationComplete(true);
+              }} 
+            />
+          ) : animationComplete ? (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="h-full flex flex-col"
+            >
+              <span className={`text-[10px] font-black uppercase tracking-widest mb-1 ${theme.text}`}>
+                Clearance: {displayedRole.toUpperCase()}
+              </span>
+              <h3 className="text-3xl font-black mb-2 leading-none text-white">{displayedRole}</h3>
               
-              {mainMode === MainMode.PAIR && hasIntel ? (
-                <div className="space-y-2">
-                    <div className="text-xl font-black text-white leading-tight">Word 1: {player.assignedProject}</div>
-                    <div className="text-xl font-black text-white leading-tight">Word 2: {player.assignedProject2}</div>
+              <div className="space-y-4 flex-1">
+                <div className="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/50">
+                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Directives</p>
+                   <p className="text-[10px] leading-relaxed text-slate-300 font-bold">{theme.desc}</p>
                 </div>
-              ) : (
-                <div className={`text-2xl font-black ${ (player.role === Role.MR_WHITE || player.role === Role.MIMIC) ? 'blur-lg bg-slate-800 rounded px-2' : 'text-white'}`}>
-                    {player.role === Role.ORACLE ? player.oracleTargetName : player.assignedProject}
+
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-black tracking-widest text-slate-500">
+                    {player.role === Role.ORACLE ? 'TARGET IDENTIFIED' : 'Mission Intel'}
+                  </label>
+                  
+                  {mainMode === MainMode.PAIR && hasIntel ? (
+                    <div className="space-y-2">
+                        <div className="text-xl font-black text-white leading-tight">Word 1: {player.assignedProject}</div>
+                        <div className="text-xl font-black text-white leading-tight">Word 2: {player.assignedProject2}</div>
+                    </div>
+                  ) : (
+                    <div className={`text-2xl font-black ${ (player.role === Role.MR_WHITE || player.role === Role.MIMIC) ? 'blur-lg bg-slate-800 rounded px-2' : 'text-white'}`}>
+                        {player.role === Role.ORACLE ? player.oracleTargetName : player.assignedProject}
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {context.tabooConstraint && hasIntel && (
+                  <div className="p-3 bg-purple-900/20 border border-purple-500/30 rounded-2xl">
+                     <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest mb-1">TABOO CONSTRAINT</p>
+                     <p className="text-[10px] text-purple-200 font-bold italic leading-tight">"{context.tabooConstraint}"</p>
+                  </div>
+                )}
+
+                {![MainMode.TERMS, MainMode.PAIR].includes(mainMode) && player.role !== Role.ORACLE && player.role !== Role.MR_WHITE && player.role !== Role.MIMIC && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Operation Site</label>
+                    <div className="text-lg font-black text-slate-100">{context.location}</div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            <div className="h-full flex items-center justify-center">
+              <p className="text-slate-600 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Encrypted Content</p>
             </div>
-
-            {context.tabooConstraint && hasIntel && (
-              <div className="p-3 bg-purple-900/20 border border-purple-500/30 rounded-2xl">
-                 <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest mb-1">TABOO CONSTRAINT</p>
-                 <p className="text-[10px] text-purple-200 font-bold italic leading-tight">"{context.tabooConstraint}"</p>
-              </div>
-            )}
-
-            {![MainMode.TERMS, MainMode.PAIR].includes(mainMode) && player.role !== Role.ORACLE && player.role !== Role.MR_WHITE && player.role !== Role.MIMIC && (
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Operation Site</label>
-                <div className="text-lg font-black text-slate-100">{context.location}</div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
         <motion.div
@@ -117,15 +205,15 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
       </div>
 
       <button 
-        disabled={!hasRevealedOnce}
+        disabled={!animationComplete}
         onClick={onNext}
         className={`w-full py-5 rounded-3xl font-black text-xl transition-all ${
-          hasRevealedOnce 
+          animationComplete 
             ? 'bg-indigo-600 text-white shadow-xl active:scale-95 border-b-4 border-indigo-900' 
             : 'bg-slate-800 text-slate-600'
         }`}
       >
-        BRIEFING READ
+        {animationComplete ? 'BRIEFING READ' : isSpinning ? 'DECRYPTING...' : 'SWIPE TO REVEAL'}
       </button>
     </div>
   );

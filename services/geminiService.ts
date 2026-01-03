@@ -14,7 +14,7 @@ export async function generateAIPrompt(mode: MainMode) {
   try {
     return await callAIApi({ requestType: 'INITIAL_PROMPT', mode });
   } catch (e) {
-    return null; // Triggers your local fallbacks
+    return null;
   }
 }
 
@@ -22,14 +22,18 @@ export async function generateScenarioContext(realProject: string, location: str
   try {
     return await callAIApi({ requestType: 'SCENARIO_CONTEXT', realProject, location });
   } catch (e) {
-    return { imposterProject: `Alternative ${realProject}`, distractors: ["Library", "Park", "Gym"] };
+    return {
+      imposterProject: `Alternative ${realProject}`,
+      distractors: ["Library", "Park", "Museum"]
+    };
   }
 }
 
 export async function generateVirusNoiseWords(realWord: string, virusWord: string) {
   try {
+    // Passing both words to the API for better context reasoning
     return await callAIApi({ requestType: 'VIRUS_NOISE', realWord, virusWord });
   } catch (e) {
-    return { noiseWords: ["System", "Data", "Glitch"] };
+    return { noiseWords: ["System", "Code", "Glitch"] };
   }
 }

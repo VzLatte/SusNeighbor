@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { ScenarioSet, InquestSet, InquestScenario, WordSet, WordPair, VirusSet } from '../types';
+import { soundService } from '../services/soundService';
 
 interface SettingsProps {
   scenarioSets: ScenarioSet[];
@@ -15,6 +16,8 @@ interface SettingsProps {
   setMusicEnabled: (b: boolean) => void;
   bgAnimationEnabled: boolean;
   setBgAnimationEnabled: (b: boolean) => void;
+  slotMachineEnabled: boolean;
+  setSlotMachineEnabled: (b: boolean) => void;
   meetingDuration: number;
   setMeetingDuration: (n: number) => void;
   lastStandDuration: number;
@@ -25,6 +28,7 @@ const Settings: React.FC<SettingsProps> = ({
   scenarioSets, wordSets, inquestSets, virusSets, onSave, onBack, 
   soundEnabled, setSoundEnabled, musicEnabled, setMusicEnabled, 
   bgAnimationEnabled, setBgAnimationEnabled,
+  slotMachineEnabled, setSlotMachineEnabled,
   meetingDuration, setMeetingDuration, lastStandDuration, setLastStandDuration 
 }) => {
   const [activeTab, setActiveTab] = useState<'PACKS' | 'GENERAL'>('PACKS');
@@ -37,7 +41,34 @@ const Settings: React.FC<SettingsProps> = ({
   const [tempInquestSet, setTempInquestSet] = useState<InquestSet | null>(null);
   const [tempVirusSet, setTempVirusSet] = useState<VirusSet | null>(null);
 
+  const [secretClicks, setSecretClicks] = useState(0);
+  const [isSecretActive, setIsSecretActive] = useState(false);
+  const [isSecretPlaying, setIsSecretPlaying] = useState(false);
+
   const APP_VERSION = "v2.2.0-Alpha";
+
+  const handleSecretTrigger = () => {
+    const nextCount = secretClicks + 1;
+    if (nextCount >= 7) {
+      if (soundEnabled) soundService.playReveal();
+      setIsSecretActive(true);
+      setSecretClicks(0);
+    } else {
+      setSecretClicks(nextCount);
+      if (soundEnabled) soundService.playClick();
+    }
+  };
+
+  const toggleSecretMusic = async () => {
+    if (isSecretPlaying) {
+      soundService.stopBGM();
+      setIsSecretPlaying(false);
+    } else {
+      // Direct await on user interaction is critical for some browsers to allow AudioContext resume
+      await soundService.startBGM('SECRET');
+      setIsSecretPlaying(true);
+    }
+  };
 
   const handleShare = async () => {
     const shareData = {
@@ -258,6 +289,10 @@ const Settings: React.FC<SettingsProps> = ({
                     <span className="font-bold uppercase text-xs tracking-widest">Dynamic Background</span>
                     <button onClick={() => setBgAnimationEnabled(!bgAnimationEnabled)} className={`w-12 h-6 rounded-full relative transition-all ${bgAnimationEnabled ? 'bg-indigo-600' : 'bg-slate-700'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${bgAnimationEnabled ? 'left-7' : 'left-1'}`} /></button>
                 </div>
+                <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-slate-700">
+                    <span className="font-bold uppercase text-xs tracking-widest">Slot Machine Reveal</span>
+                    <button onClick={() => setSlotMachineEnabled(!slotMachineEnabled)} className={`w-12 h-6 rounded-full relative transition-all ${slotMachineEnabled ? 'bg-indigo-600' : 'bg-slate-700'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${slotMachineEnabled ? 'left-7' : 'left-1'}`} /></button>
+                </div>
               </div>
             </div>
 
@@ -278,6 +313,26 @@ const Settings: React.FC<SettingsProps> = ({
                 </p>
               </div>
             </div>
+
+            {isSecretActive && (
+              <div className="space-y-4 animate-in zoom-in duration-300">
+                <h4 className="text-[10px] font-black text-pink-500 uppercase tracking-widest px-2">Neural Override Active</h4>
+                <div className="p-5 bg-pink-900/10 border-2 border-pink-500/30 rounded-3xl flex flex-col items-center gap-4 shadow-lg shadow-pink-500/10">
+                   <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all ${isSecretPlaying ? 'bg-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.5)] animate-bounce' : 'bg-slate-700 opacity-50'}`}>
+                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19V5l12 7-12 7z" /></svg>
+                   </div>
+                   <div className="text-center">
+                      <p className="text-[10px] font-black text-pink-500 uppercase tracking-widest mb-1">Secret Channel: Rave 01</p>
+                      <button 
+                        onClick={toggleSecretMusic}
+                        className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${isSecretPlaying ? 'bg-slate-800 text-pink-500 border border-pink-500/50' : 'bg-pink-600 text-white shadow-lg shadow-pink-500/20'}`}
+                      >
+                         {isSecretPlaying ? 'STOP DECRYPTION' : 'INITIALIZE AUDIO'}
+                      </button>
+                   </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-4">
               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Temporal Protocols</h4>
@@ -316,7 +371,10 @@ const Settings: React.FC<SettingsProps> = ({
                     <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-300">About Creator</span>
                  </button>
-                 <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-1 opacity-60">
+                 <div 
+                   onClick={handleSecretTrigger}
+                   className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-1 opacity-60 cursor-pointer active:scale-95 transition-all"
+                 >
                     <span className="text-[8px] font-black uppercase text-slate-500">System Build</span>
                     <span className="text-[10px] font-black text-indigo-500">{APP_VERSION}</span>
                  </div>
@@ -331,7 +389,7 @@ const Settings: React.FC<SettingsProps> = ({
       {/* Info Modal Overlay */}
       {infoModal && (
         <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200">
-           <div className="bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl space-y-6 animate-in zoom-in duration-300">
+           <div className="bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] w-full max-sm p-8 shadow-2xl space-y-6 animate-in zoom-in duration-300">
               <div className="text-center space-y-2">
                  <h3 className="text-xl font-black uppercase tracking-tighter text-indigo-400">{infoModal.title}</h3>
                  <div className="w-12 h-1 bg-indigo-500/20 mx-auto rounded-full" />

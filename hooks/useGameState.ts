@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { 
   GamePhase, Player, Role, GameMode, MainMode, GroupMode, 
@@ -72,6 +73,7 @@ export const useGameState = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [bgAnimationEnabled, setBgAnimationEnabled] = useState(true);
+  const [slotMachineEnabled, setSlotMachineEnabled] = useState(true);
   const [meetingDuration, setMeetingDuration] = useState(120);
   const [lastStandDuration, setLastStandDuration] = useState(10);
 
@@ -84,6 +86,7 @@ export const useGameState = () => {
         setSoundEnabled(parsed.soundEnabled ?? true);
         setMusicEnabled(parsed.musicEnabled ?? true);
         setBgAnimationEnabled(parsed.bgAnimationEnabled ?? true);
+        setSlotMachineEnabled(parsed.slotMachineEnabled ?? true);
         setMeetingDuration(parsed.meetingDuration ?? 120);
         setLastStandDuration(parsed.lastStandDuration ?? 10);
       }
@@ -93,9 +96,9 @@ export const useGameState = () => {
   // Save Settings
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({
-      soundEnabled, musicEnabled, bgAnimationEnabled, meetingDuration, lastStandDuration
+      soundEnabled, musicEnabled, bgAnimationEnabled, slotMachineEnabled, meetingDuration, lastStandDuration
     }));
-  }, [soundEnabled, musicEnabled, bgAnimationEnabled, meetingDuration, lastStandDuration]);
+  }, [soundEnabled, musicEnabled, bgAnimationEnabled, slotMachineEnabled, meetingDuration, lastStandDuration]);
 
   // Persistent Stats
   const [allTimePoints, setAllTimePoints] = useState<{ [name: string]: number }>(() => {
@@ -431,6 +434,7 @@ export const useGameState = () => {
     gameContext, outcome, setOutcome, virusPoints, setVirusPoints,
     lastEliminatedPlayer, setLastEliminatedPlayer,
     soundEnabled, setSoundEnabled, musicEnabled, setMusicEnabled, bgAnimationEnabled, setBgAnimationEnabled,
+    slotMachineEnabled, setSlotMachineEnabled,
     meetingDuration, setMeetingDuration,
     lastStandDuration, setLastStandDuration, allTimePoints, gameHistory, playerCredits,
     notification, setNotification,
