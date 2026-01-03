@@ -10,14 +10,13 @@ interface RevealCardProps {
   mainMode: MainMode;
   soundEnabled: boolean;
   slotMachineEnabled: boolean;
+  activeRoles: Role[];
   onNext: () => void;
   context: GameContext;
 }
 
-const ALL_ROLES = [Role.NEIGHBOR, Role.IMPOSTER, Role.MR_WHITE, Role.ANARCHIST, Role.MIMIC, Role.ORACLE];
-
-const SlotMachine: React.FC<{ targetRole: Role, onFinish: () => void, soundEnabled: boolean }> = ({ targetRole, onFinish, soundEnabled }) => {
-  const [displayRole, setDisplayRole] = useState(ALL_ROLES[0]);
+const SlotMachine: React.FC<{ targetRole: Role, activeRoles: Role[], onFinish: () => void, soundEnabled: boolean }> = ({ targetRole, activeRoles, onFinish, soundEnabled }) => {
+  const [displayRole, setDisplayRole] = useState(activeRoles[0] || Role.NEIGHBOR);
   const [isDone, setIsDone] = useState(false);
 
   useEffect(() => {
@@ -34,8 +33,8 @@ const SlotMachine: React.FC<{ targetRole: Role, onFinish: () => void, soundEnabl
         return;
       }
 
-      // Randomly cycle roles
-      const nextRole = ALL_ROLES[Math.floor(Math.random() * ALL_ROLES.length)];
+      // Randomly cycle roles ONLY from active roles
+      const nextRole = activeRoles[Math.floor(Math.random() * activeRoles.length)];
       setDisplayRole(nextRole);
       if (soundEnabled) soundService.playTick();
 
@@ -46,7 +45,7 @@ const SlotMachine: React.FC<{ targetRole: Role, onFinish: () => void, soundEnabl
     };
 
     tick();
-  }, []);
+  }, [targetRole, activeRoles, soundEnabled, onFinish]);
 
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -72,7 +71,7 @@ const SlotMachine: React.FC<{ targetRole: Role, onFinish: () => void, soundEnabl
   );
 };
 
-const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, soundEnabled, slotMachineEnabled, onNext, context }) => {
+const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, soundEnabled, slotMachineEnabled, activeRoles, onNext, context }) => {
   const [hasRevealedOnce, setHasRevealedOnce] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
   const [animationComplete, setAnimationComplete] = useState(false);
@@ -111,6 +110,7 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
 
   const theme = getRoleTheme();
   const hasIntel = [Role.NEIGHBOR, Role.ANARCHIST].includes(player.role);
+  const showCategory = mainMode === MainMode.TERMS || mainMode === MainMode.PAIR || mainMode === MainMode.VIRUS_PURGE;
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center space-y-8">
@@ -125,6 +125,7 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
           {isSpinning && !animationComplete ? (
             <SlotMachine 
               targetRole={displayedRole} 
+              activeRoles={activeRoles}
               soundEnabled={soundEnabled} 
               onFinish={() => {
                 setIsSpinning(false);
@@ -143,6 +144,13 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
               <h3 className="text-3xl font-black mb-2 leading-none text-white">{displayedRole}</h3>
               
               <div className="space-y-4 flex-1">
+                {showCategory && context.category && (
+                  <div className="p-2 bg-indigo-950/40 rounded-xl border border-indigo-500/30 text-center">
+                    <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Category</p>
+                    <p className="text-xs font-black text-white">{context.category}</p>
+                  </div>
+                )}
+
                 <div className="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/50">
                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Directives</p>
                    <p className="text-[10px] leading-relaxed text-slate-300 font-bold">{theme.desc}</p>
@@ -172,7 +180,7 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
                   </div>
                 )}
 
-                {![MainMode.TERMS, MainMode.PAIR].includes(mainMode) && player.role !== Role.ORACLE && player.role !== Role.MR_WHITE && player.role !== Role.MIMIC && (
+                {![MainMode.TERMS, MainMode.PAIR, MainMode.VIRUS_PURGE].includes(mainMode) && player.role !== Role.ORACLE && player.role !== Role.MR_WHITE && player.role !== Role.MIMIC && (
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Operation Site</label>
                     <div className="text-lg font-black text-slate-100">{context.location}</div>

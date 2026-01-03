@@ -1,3 +1,4 @@
+
 export enum Role {
   NEIGHBOR = 'Neighbor',
   IMPOSTER = 'Imposter',
@@ -133,6 +134,7 @@ export interface GameContext {
   mainMode: MainMode;
   realProject: string;
   location: string;
+  category?: string; // Added for Terms/Pair visibility
   catchRule?: string; 
   tabooConstraint?: string; 
   imposterProject: string;

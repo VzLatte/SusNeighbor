@@ -220,6 +220,7 @@ export const useGameState = () => {
         let virusWord = "";
         let realWord = "";
         let noiseWords: string[] = ["System", "Code", "Breach"]; 
+        let category = "Co-op Core";
 
         if (useAiMissions) {
           try {
@@ -227,6 +228,7 @@ export const useGameState = () => {
             if (aiPrompt) {
               virusWord = aiPrompt.virusWord;
               realWord = aiPrompt.realWord;
+              category = "AI Network Purge";
               const noiseData = await generateVirusNoiseWords(realWord, virusWord);
               if (noiseData?.noiseWords) noiseWords = noiseData.noiseWords;
             } else throw new Error("Connection Timeout or Rate Limit");
@@ -239,12 +241,14 @@ export const useGameState = () => {
             const vs = virusSets[0];
             virusWord = vs.words[Math.floor(Math.random() * vs.words.length)];
             realWord = wordSets[0].pairs[0].wordA;
+            category = wordSets[0].name;
           }
         } else {
           const vs = virusSets.find(s => activeVirusSetIds.includes(s.id)) || virusSets[0];
           virusWord = vs.words[Math.floor(Math.random() * vs.words.length)];
           const ws = wordSets.find(s => activeWordSetIds.includes(s.id)) || wordSets[0];
           realWord = ws.pairs[Math.floor(Math.random() * ws.pairs.length)].wordA;
+          category = ws.name;
         }
 
         const context: GameContext = {
@@ -253,6 +257,7 @@ export const useGameState = () => {
           virusWord,
           noiseWords,
           location: 'Secure Uplink',
+          category,
           imposterProject: 'THREAT_DETECTED',
           distractors: [],
           includeHints: true,
@@ -314,7 +319,7 @@ export const useGameState = () => {
       const availablePowers = Object.values(PowerUp).sort(() => Math.random() - 0.5).slice(0, 3);
 
       let wordA = "Coffee", wordB = "Tea";
-      let location = "Terms Office", realProject = "Coffee", catchRule = "No sugar";
+      let location = "Terms Office", realProject = "Coffee", catchRule = "No sugar", category = "Unclassified";
       let distractors: string[] = ["Library", "Park", "Gym"];
       let imposterProject = "Tea";
 
@@ -328,10 +333,12 @@ export const useGameState = () => {
             wordB = aiPrompt?.wordB || wordB;
             realProject = wordA;
             imposterProject = wordB;
+            category = "Neural Retrieval";
           } else {
             realProject = aiPrompt?.project || realProject;
             location = aiPrompt?.location || location;
             catchRule = aiPrompt?.catch || catchRule;
+            category = "Strategic Ops";
           }
         } catch (e: any) {
           console.warn("AI Mission Gen Failed, fallback engaged.", e);
@@ -347,12 +354,14 @@ export const useGameState = () => {
           const pair = randomSet.pairs[Math.floor(Math.random() * randomSet.pairs.length)];
           wordA = pair.wordA; wordB = pair.wordB;
           realProject = wordA; imposterProject = wordB;
+          category = randomSet.name;
         } else {
           const activeSets = scenarioSets.filter(s => activeSetIds.includes(s.id));
           const randomSet = activeSets[Math.floor(Math.random() * activeSets.length)] || scenarioSets[0];
           realProject = randomSet.projects[Math.floor(Math.random() * randomSet.projects.length)];
           location = randomSet.locations[Math.floor(Math.random() * randomSet.locations.length)];
           catchRule = randomSet.catches[Math.floor(Math.random() * randomSet.catches.length)];
+          category = randomSet.name;
         }
       }
 
@@ -362,9 +371,9 @@ export const useGameState = () => {
         if (mainMode === MainMode.PAIR) {
           const pool = [wordA, wordB, "Sugar", "Milk", "Honey"];
           const chain = Array.from({length: playerCount}).map((_, i) => pool[i % pool.length]);
-          context = { mainMode, realProject: chain[0], imposterProject: '???', location: 'The Chain', distractors: pool.slice(0, 3), includeHints: false, hasOracleActive: shuffledRoles.includes(Role.ORACLE), dualWordsChain: chain, isAuctionActive, isBlindBidding, availablePowers };
+          context = { mainMode, realProject: chain[0], imposterProject: '???', location: 'The Chain', category, distractors: pool.slice(0, 3), includeHints: false, hasOracleActive: shuffledRoles.includes(Role.ORACLE), dualWordsChain: chain, isAuctionActive, isBlindBidding, availablePowers };
         } else {
-          context = { mainMode, realProject, imposterProject: includeHints ? imposterProject : '???', location: 'Terms Office', distractors: [], includeHints, tabooConstraint: includeTaboo ? TABOO_CONSTRAINTS[Math.floor(Math.random() * TABOO_CONSTRAINTS.length)] : undefined, hasOracleActive: shuffledRoles.includes(Role.ORACLE), isAuctionActive, isBlindBidding, availablePowers };
+          context = { mainMode, realProject, imposterProject: includeHints ? imposterProject : '???', location: 'Terms Office', category, distractors: [], includeHints, tabooConstraint: includeTaboo ? TABOO_CONSTRAINTS[Math.floor(Math.random() * TABOO_CONSTRAINTS.length)] : undefined, hasOracleActive: shuffledRoles.includes(Role.ORACLE), isAuctionActive, isBlindBidding, availablePowers };
         }
       } else {
         try {
@@ -372,7 +381,7 @@ export const useGameState = () => {
           imposterProject = scenarioData.imposterProject;
           distractors = scenarioData.distractors;
         } catch { /* use fallbacks */ }
-        context = { mainMode, realProject, location, catchRule, imposterProject: includeHints ? imposterProject : '???', distractors, includeHints, hasOracleActive: shuffledRoles.includes(Role.ORACLE), isAuctionActive, isBlindBidding, availablePowers };
+        context = { mainMode, realProject, location, category, catchRule, imposterProject: includeHints ? imposterProject : '???', distractors, includeHints, hasOracleActive: shuffledRoles.includes(Role.ORACLE), isAuctionActive, isBlindBidding, availablePowers };
       }
 
       const finalPlayers: Player[] = shuffledRoles.map((role, i) => {
@@ -423,6 +432,10 @@ export const useGameState = () => {
     setNotification(null);
   };
 
+  const activeRolesInPlay = players.length > 0 
+    ? Array.from(new Set(players.map(p => p.role)))
+    : [];
+
   return {
     // State
     phase, setPhase, gameCategory, setGameCategory, playerCount, setPlayerCount,
@@ -445,6 +458,7 @@ export const useGameState = () => {
     meetingDuration, setMeetingDuration,
     lastStandDuration, setLastStandDuration, allTimePoints, gameHistory, playerCredits,
     notification, setNotification,
+    activeRolesInPlay, // New field for UI
     // Actions
     handleStart, resetGame, awardPoints, clearStats,
     handleDetectionTrigger: () => {

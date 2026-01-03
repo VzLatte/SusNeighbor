@@ -264,6 +264,7 @@ const App: React.FC = () => {
                   mainMode={game.mainMode} 
                   soundEnabled={game.soundEnabled} 
                   slotMachineEnabled={game.slotMachineEnabled}
+                  activeRoles={game.activeRolesInPlay}
                   context={game.gameContext!} 
                   onNext={() => { 
                     if (game.currentPlayerIndex < game.playerCount - 1) { game.setCurrentPlayerIndex(game.currentPlayerIndex + 1); game.setPhase('REVEAL_TRANSITION'); } 
