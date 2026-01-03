@@ -14,6 +14,8 @@ interface SettingsProps {
   setSoundEnabled: (b: boolean) => void;
   musicEnabled: boolean;
   setMusicEnabled: (b: boolean) => void;
+  musicVolume: number;
+  setMusicVolume: (v: number) => void;
   bgAnimationEnabled: boolean;
   setBgAnimationEnabled: (b: boolean) => void;
   slotMachineEnabled: boolean;
@@ -27,6 +29,7 @@ interface SettingsProps {
 const Settings: React.FC<SettingsProps> = ({ 
   scenarioSets, wordSets, inquestSets, virusSets, onSave, onBack, 
   soundEnabled, setSoundEnabled, musicEnabled, setMusicEnabled, 
+  musicVolume, setMusicVolume,
   bgAnimationEnabled, setBgAnimationEnabled,
   slotMachineEnabled, setSlotMachineEnabled,
   meetingDuration, setMeetingDuration, lastStandDuration, setLastStandDuration 
@@ -281,10 +284,31 @@ const Settings: React.FC<SettingsProps> = ({
                     <span className="font-bold uppercase text-xs tracking-widest">Sound FX</span>
                     <button onClick={() => setSoundEnabled(!soundEnabled)} className={`w-12 h-6 rounded-full relative transition-all ${soundEnabled ? 'bg-indigo-600' : 'bg-slate-700'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${soundEnabled ? 'left-7' : 'left-1'}`} /></button>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-slate-700">
-                    <span className="font-bold uppercase text-xs tracking-widest">Atmosphere (BGM)</span>
-                    <button onClick={() => setMusicEnabled(!musicEnabled)} className={`w-12 h-6 rounded-full relative transition-all ${musicEnabled ? 'bg-indigo-600' : 'bg-slate-700'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${musicEnabled ? 'left-7' : 'left-1'}`} /></button>
+                
+                <div className="p-4 bg-slate-800 rounded-2xl border border-slate-700 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <span className="font-bold uppercase text-xs tracking-widest">Atmosphere (BGM)</span>
+                        <button onClick={() => setMusicEnabled(!musicEnabled)} className={`w-12 h-6 rounded-full relative transition-all ${musicEnabled ? 'bg-indigo-600' : 'bg-slate-700'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${musicEnabled ? 'left-7' : 'left-1'}`} /></button>
+                    </div>
+                    {musicEnabled && (
+                      <div className="space-y-2 pt-2 border-t border-slate-700/50">
+                        <div className="flex justify-between items-center">
+                          <label className="text-[10px] font-black text-slate-500 uppercase">Music Volume</label>
+                          <span className="text-[10px] font-black text-indigo-400">{Math.round(musicVolume * 100)}%</span>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="1" 
+                          step="0.01" 
+                          value={musicVolume} 
+                          onChange={(e) => setMusicVolume(parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-slate-900 rounded-lg accent-indigo-500 appearance-none cursor-pointer" 
+                        />
+                      </div>
+                    )}
                 </div>
+
                 <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-slate-700">
                     <span className="font-bold uppercase text-xs tracking-widest">Dynamic Background</span>
                     <button onClick={() => setBgAnimationEnabled(!bgAnimationEnabled)} className={`w-12 h-6 rounded-full relative transition-all ${bgAnimationEnabled ? 'bg-indigo-600' : 'bg-slate-700'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${bgAnimationEnabled ? 'left-7' : 'left-1'}`} /></button>

@@ -72,6 +72,7 @@ export const useGameState = () => {
   // Settings
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [musicEnabled, setMusicEnabled] = useState(true);
+  const [musicVolume, setMusicVolume] = useState(0.5);
   const [bgAnimationEnabled, setBgAnimationEnabled] = useState(true);
   const [slotMachineEnabled, setSlotMachineEnabled] = useState(true);
   const [meetingDuration, setMeetingDuration] = useState(120);
@@ -85,6 +86,7 @@ export const useGameState = () => {
         const parsed = JSON.parse(saved);
         setSoundEnabled(parsed.soundEnabled ?? true);
         setMusicEnabled(parsed.musicEnabled ?? true);
+        setMusicVolume(parsed.musicVolume ?? 0.5);
         setBgAnimationEnabled(parsed.bgAnimationEnabled ?? true);
         setSlotMachineEnabled(parsed.slotMachineEnabled ?? true);
         setMeetingDuration(parsed.meetingDuration ?? 120);
@@ -96,9 +98,14 @@ export const useGameState = () => {
   // Save Settings
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({
-      soundEnabled, musicEnabled, bgAnimationEnabled, slotMachineEnabled, meetingDuration, lastStandDuration
+      soundEnabled, musicEnabled, musicVolume, bgAnimationEnabled, slotMachineEnabled, meetingDuration, lastStandDuration
     }));
-  }, [soundEnabled, musicEnabled, bgAnimationEnabled, slotMachineEnabled, meetingDuration, lastStandDuration]);
+  }, [soundEnabled, musicEnabled, musicVolume, bgAnimationEnabled, slotMachineEnabled, meetingDuration, lastStandDuration]);
+
+  // Sync music volume to sound service
+  useEffect(() => {
+    soundService.setBGMVolume(musicVolume);
+  }, [musicVolume]);
 
   // Persistent Stats
   const [allTimePoints, setAllTimePoints] = useState<{ [name: string]: number }>(() => {
@@ -433,7 +440,7 @@ export const useGameState = () => {
     players, setPlayers, currentPlayerIndex, setCurrentPlayerIndex,
     gameContext, outcome, setOutcome, virusPoints, setVirusPoints,
     lastEliminatedPlayer, setLastEliminatedPlayer,
-    soundEnabled, setSoundEnabled, musicEnabled, setMusicEnabled, bgAnimationEnabled, setBgAnimationEnabled,
+    soundEnabled, setSoundEnabled, musicEnabled, setMusicEnabled, musicVolume, setMusicVolume, bgAnimationEnabled, setBgAnimationEnabled,
     slotMachineEnabled, setSlotMachineEnabled,
     meetingDuration, setMeetingDuration,
     lastStandDuration, setLastStandDuration, allTimePoints, gameHistory, playerCredits,
