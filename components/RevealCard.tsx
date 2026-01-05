@@ -4,6 +4,18 @@ import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-mo
 import { Player, Role, GameContext, GameMode, MainMode } from '../types';
 import { soundService } from '../services/soundService';
 
+// Fix: Add missing RevealCardProps interface definition
+interface RevealCardProps {
+  player: Player;
+  gameMode: GameMode;
+  mainMode: MainMode;
+  soundEnabled: boolean;
+  slotMachineEnabled: boolean;
+  activeRoles: Role[];
+  context: GameContext;
+  onNext: () => void;
+}
+
 // Fix: Cast motion to any to avoid property missing errors in JSX in this environment
 const M = motion as any;
 
@@ -37,7 +49,6 @@ const SlotMachine: React.FC<{ targetRole: Role, activeRoles: Role[], onFinish: (
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-4">
       <div className="relative w-full h-32 flex items-center justify-center overflow-hidden bg-slate-950 rounded-2xl border-2 border-indigo-500/50 shadow-[inset_0_0_20px_rgba(79,70,229,0.3)]">
-        {/* Fix: Using M.div instead of motion.div to bypass environment-specific type errors */}
         <M.div key={displayRole} initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -50, opacity: 0 }} className={`text-3xl font-black uppercase tracking-tighter ${isDone ? 'text-indigo-400 scale-110 shadow-indigo-500/20' : 'text-slate-600'}`} style={{ textShadow: isDone ? '0 0 15px rgba(129, 140, 248, 0.6)' : 'none' }}>
           {displayRole}
         </M.div>
@@ -109,7 +120,6 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
           {isSpinning ? (
             <SlotMachine targetRole={displayedRole} activeRoles={activeRoles} soundEnabled={soundEnabled} onFinish={() => { setIsSpinning(false); setShowContent(true); }} />
           ) : showContent ? (
-            // Fix: Using M.div instead of motion.div to bypass environment-specific type errors
             <M.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full flex flex-col">
               <span className={`text-[10px] font-black uppercase tracking-widest mb-1 ${theme.text}`}>Clearance: {displayedRole.toUpperCase()}</span>
               <h3 className="text-3xl font-black mb-2 leading-none text-white">{displayedRole}</h3>
@@ -157,7 +167,6 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
             </div>
           )}
         </div>
-        {/* Fix: Using M.div instead of motion.div to bypass environment-specific type errors for drag and onDragEnd */}
         <M.div drag="y" dragConstraints={{ top: -450, bottom: 0 }} style={{ y: peekY, opacity }} onDragEnd={handleDragEnd} className="absolute inset-0 z-10 bg-slate-800 flex flex-col items-center justify-center p-6 text-center space-y-4 cursor-grab active:cursor-grabbing border-4 border-slate-700 rounded-[2.8rem]" whileTap={{ scale: 0.98 }}>
           <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center">
             <svg className="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
@@ -173,15 +182,19 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
       {/* Confirmation Modal */}
       <AnimatePresence>
         {showConfirmation && (
-          // Fix: Using M.div instead of motion.div to bypass environment-specific type errors
           <M.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-8">
             <M.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900 border-2 border-indigo-500/30 rounded-[2.5rem] p-8 w-full max-w-sm text-center shadow-2xl space-y-8">
               <div className="space-y-2">
                 <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Memorization Lock</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Once you proceed, the phone must be passed. Are you certain you have internalized the mission intel?</p>
+                <p className="text-slate-400 text-sm leading-relaxed">Once you proceed, the phone must be passed. Have you internalized your secret word and mission objectives?</p>
               </div>
-              <button onClick={() => { if (soundEnabled) soundService.playLockIn(); onNext(); }} className="w-full py-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-xl shadow-xl shadow-indigo-500/20 active:scale-95 border-b-4 border-indigo-900 transition-all">I HAVE MEMORIZED IT</button>
-              <button onClick={() => setShowConfirmation(false)} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-300">Wait, show intel again</button>
+              <button 
+                onClick={() => { if (soundEnabled) soundService.playLockIn(); onNext(); }} 
+                className="w-full py-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-xl shadow-xl shadow-indigo-500/20 active:scale-95 border-b-4 border-indigo-900 transition-all"
+              >
+                I HAVE MEMORIZED MY WORD
+              </button>
+              <button onClick={() => setShowConfirmation(false)} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-300">Wait, show briefing again</button>
             </M.div>
           </M.div>
         )}

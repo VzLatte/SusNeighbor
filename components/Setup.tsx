@@ -5,6 +5,45 @@ import { Role, GameMode, MainMode, GroupMode, ScenarioSet, InquestSet, WordSet, 
 import { MIN_PLAYERS, MAX_PLAYERS } from '../constants';
 import { soundService } from '../services/soundService';
 
+// Fix: Add missing SetupProps interface definition
+interface SetupProps {
+  playerCount: number;
+  setPlayerCount: (n: number) => void;
+  gameCategory: GameCategory;
+  setGameCategory: (c: GameCategory) => void;
+  groupMode: GroupMode;
+  setGroupMode: (m: GroupMode) => void;
+  mainMode: MainMode;
+  setMainMode: (m: MainMode) => void;
+  customRoleConfig: CustomRoleConfig;
+  setCustomRoleConfig: (c: CustomRoleConfig) => void;
+  soundEnabled: boolean;
+  hasMrWhite: boolean;
+  setHasMrWhite: (b: boolean) => void;
+  hasMimic: boolean;
+  setHasMimic: (b: boolean) => void;
+  hasBountyHunter: boolean;
+  setHasBountyHunter: (b: boolean) => void;
+  hasOracle: boolean;
+  setHasOracle: (b: boolean) => void;
+  hasAnarchist: boolean;
+  setHasAnarchist: (b: boolean) => void;
+  gameMode: GameMode;
+  setGameMode: (m: GameMode) => void;
+  includeTaboo: boolean;
+  setIncludeTaboo: (b: boolean) => void;
+  wordSets: WordSet[];
+  activeWordSetIds: string[];
+  setActiveWordSetIds: (ids: string[]) => void;
+  scenarioSets: ScenarioSet[];
+  activeSetIds: string[];
+  setActiveSetIds: (ids: string[]) => void;
+  inquestSets: InquestSet[];
+  activeInquestSetIds: string[];
+  setActiveInquestSetIds: (ids: string[]) => void;
+  onStart: () => void;
+}
+
 // Fix: Cast motion to any to avoid property missing errors in JSX in this environment
 const M = motion as any;
 
