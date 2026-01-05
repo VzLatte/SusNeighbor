@@ -33,13 +33,11 @@ const SlotMachine: React.FC<{ targetRole: Role, activeRoles: Role[], onFinish: (
         return;
       }
 
-      // Randomly cycle roles ONLY from active roles
       const nextRole = activeRoles[Math.floor(Math.random() * activeRoles.length)];
       setDisplayRole(nextRole);
       if (soundEnabled) soundService.playTick();
 
       count++;
-      // Progressive slowdown
       const nextDelay = baseSpeed + (Math.pow(count / totalSteps, 3) * 300);
       setTimeout(tick, nextDelay);
     };
@@ -61,7 +59,6 @@ const SlotMachine: React.FC<{ targetRole: Role, activeRoles: Role[], onFinish: (
           {displayRole}
         </motion.div>
         
-        {/* Slot machine glass glare overlay */}
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-white/5 via-transparent to-black/20" />
       </div>
       <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500/50 animate-pulse">
@@ -72,25 +69,24 @@ const SlotMachine: React.FC<{ targetRole: Role, activeRoles: Role[], onFinish: (
 };
 
 const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, soundEnabled, slotMachineEnabled, activeRoles, onNext, context }) => {
-  const [hasRevealedOnce, setHasRevealedOnce] = useState(false);
+  const [hasRevealed, setHasRevealed] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [animationComplete, setAnimationComplete] = useState(false);
+  const [showContent, setShowContent] = useState(false);
   
   const y = useMotionValue(0);
   const peekY = useTransform(y, [0, -400], [0, -400], { clamp: true });
   const opacity = useTransform(y, [0, -100], [1, 0.8]);
 
   const handleDragEnd = (_: any, info: any) => {
-    if (info.offset.y < -100) {
-      if (!hasRevealedOnce) {
-        if (slotMachineEnabled) {
-          setIsSpinning(true);
-        } else {
-          setAnimationComplete(true);
-        }
-        if (soundEnabled) soundService.playReveal();
+    if (info.offset.y < -100 && !hasRevealed) {
+      setHasRevealed(true);
+      if (soundEnabled) soundService.playReveal();
+      
+      if (slotMachineEnabled) {
+        setIsSpinning(true);
+      } else {
+        setShowContent(true);
       }
-      setHasRevealedOnce(true);
     }
   };
 
@@ -99,17 +95,19 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
 
   const getRoleTheme = () => {
     switch(displayedRole) {
-      case Role.IMPOSTER: return { color: 'pink', text: 'text-pink-500', desc: "Infiltrate the group. Your project is a decoy. Blend in and don't get caught." };
-      case Role.MR_WHITE: return { color: 'yellow', text: 'text-yellow-500', desc: "Total blackout. You have no intel. Listen to the others and fake your mission." };
-      case Role.ANARCHIST: return { color: 'orange', text: 'text-orange-500', desc: "Chaos is your goal. Act suspicious. You win if the group votes YOU out." };
-      case Role.MIMIC: return { color: 'teal', text: 'text-teal-500', desc: "Double agent. You know nothing. Identify both the Imposter and the Project to win." };
-      case Role.ORACLE: return { color: 'purple', text: 'text-purple-400', desc: "Strategic insight. You know the Imposter's identity. Don't be too obvious." };
-      default: return { color: 'indigo', text: 'text-indigo-400', desc: "Protect the secret project. Find the infiltrators among you." };
+      case Role.IMPOSTER: return { color: 'pink', text: 'text-pink-500', desc: "Infiltrate the group. Your project is a decoy. Blend in." };
+      case Role.MR_WHITE: return { color: 'yellow', text: 'text-yellow-500', desc: "Total blackout. You have no intel. Fake it." };
+      case Role.ANARCHIST: return { color: 'orange', text: 'text-orange-500', desc: "Chaos agent. Get yourself voted out to win." };
+      case Role.MIMIC: return { color: 'teal', text: 'text-teal-500', desc: "Imposter Team. You know the REAL word. Help the Imposters." };
+      case Role.BOUNTY_HUNTER: return { color: 'cyan', text: 'text-cyan-400', desc: "Neighbor Team. You know the word. Find the Imposter. If you vote wrong, you die." };
+      case Role.ORACLE: return { color: 'purple', text: 'text-purple-400', desc: "Analyze the data below. Logic is your weapon." };
+      default: return { color: 'indigo', text: 'text-indigo-400', desc: "Protect the secret project. Find the infiltrators." };
     }
   };
 
   const theme = getRoleTheme();
-  const hasIntel = [Role.NEIGHBOR, Role.ANARCHIST].includes(player.role);
+  // Neighbors, Anarchists, Bounty Hunters, Mimics (Imposter team but knows word) see the real project
+  const hasIntel = [Role.NEIGHBOR, Role.ANARCHIST, Role.BOUNTY_HUNTER, Role.MIMIC].includes(player.role);
   const showCategory = mainMode === MainMode.TERMS || mainMode === MainMode.PAIR || mainMode === MainMode.VIRUS_PURGE;
 
   return (
@@ -122,17 +120,17 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
       <div className="w-full aspect-[3/4] max-w-[280px] relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-slate-800 bg-slate-900">
         
         <div className="absolute inset-0 p-6 flex flex-col pointer-events-none">
-          {isSpinning && !animationComplete ? (
+          {isSpinning ? (
             <SlotMachine 
               targetRole={displayedRole} 
               activeRoles={activeRoles}
               soundEnabled={soundEnabled} 
               onFinish={() => {
                 setIsSpinning(false);
-                setAnimationComplete(true);
+                setShowContent(true);
               }} 
             />
-          ) : animationComplete ? (
+          ) : showContent ? (
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -158,7 +156,7 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
 
                 <div className="space-y-1">
                   <label className="text-[10px] uppercase font-black tracking-widest text-slate-500">
-                    {player.role === Role.ORACLE ? 'TARGET IDENTIFIED' : 'Mission Intel'}
+                    {player.role === Role.ORACLE ? 'CRYPTIC INTEL' : 'Mission Intel'}
                   </label>
                   
                   {mainMode === MainMode.PAIR && hasIntel ? (
@@ -167,8 +165,8 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
                         <div className="text-xl font-black text-white leading-tight">Word 2: {player.assignedProject2}</div>
                     </div>
                   ) : (
-                    <div className={`text-2xl font-black ${ (player.role === Role.MR_WHITE || player.role === Role.MIMIC) ? 'blur-lg bg-slate-800 rounded px-2' : 'text-white'}`}>
-                        {player.role === Role.ORACLE ? player.oracleTargetName : player.assignedProject}
+                    <div className={`text-xl font-black ${ (player.role === Role.MR_WHITE) ? 'blur-lg bg-slate-800 rounded px-2' : 'text-white'}`}>
+                        {player.role === Role.ORACLE ? (player.oracleInfo || "No Data") : player.assignedProject}
                     </div>
                   )}
                 </div>
@@ -180,7 +178,7 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
                   </div>
                 )}
 
-                {![MainMode.TERMS, MainMode.PAIR, MainMode.VIRUS_PURGE].includes(mainMode) && player.role !== Role.ORACLE && player.role !== Role.MR_WHITE && player.role !== Role.MIMIC && (
+                {![MainMode.TERMS, MainMode.PAIR, MainMode.VIRUS_PURGE].includes(mainMode) && player.role !== Role.ORACLE && player.role !== Role.MR_WHITE && (
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Operation Site</label>
                     <div className="text-lg font-black text-slate-100">{context.location}</div>
@@ -213,15 +211,15 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
       </div>
 
       <button 
-        disabled={!animationComplete}
+        disabled={!showContent}
         onClick={onNext}
         className={`w-full py-5 rounded-3xl font-black text-xl transition-all ${
-          animationComplete 
+          showContent 
             ? 'bg-indigo-600 text-white shadow-xl active:scale-95 border-b-4 border-indigo-900' 
             : 'bg-slate-800 text-slate-600'
         }`}
       >
-        {animationComplete ? 'BRIEFING READ' : isSpinning ? 'DECRYPTING...' : 'SWIPE TO REVEAL'}
+        {showContent ? 'BRIEFING READ' : isSpinning ? 'DECRYPTING...' : 'SWIPE TO REVEAL'}
       </button>
     </div>
   );

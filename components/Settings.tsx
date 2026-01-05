@@ -20,6 +20,8 @@ interface SettingsProps {
   setBgAnimationEnabled: (b: boolean) => void;
   slotMachineEnabled: boolean;
   setSlotMachineEnabled: (b: boolean) => void;
+  requireRememberConfirmation: boolean;
+  setRequireRememberConfirmation: (b: boolean) => void;
   meetingDuration: number;
   setMeetingDuration: (n: number) => void;
   lastStandDuration: number;
@@ -32,6 +34,7 @@ const Settings: React.FC<SettingsProps> = ({
   musicVolume, setMusicVolume,
   bgAnimationEnabled, setBgAnimationEnabled,
   slotMachineEnabled, setSlotMachineEnabled,
+  requireRememberConfirmation, setRequireRememberConfirmation,
   meetingDuration, setMeetingDuration, lastStandDuration, setLastStandDuration 
 }) => {
   const [activeTab, setActiveTab] = useState<'PACKS' | 'GENERAL'>('PACKS');
@@ -48,7 +51,7 @@ const Settings: React.FC<SettingsProps> = ({
   const [isSecretActive, setIsSecretActive] = useState(false);
   const [isSecretPlaying, setIsSecretPlaying] = useState(false);
 
-  const APP_VERSION = "v2.2.0-Alpha";
+  const APP_VERSION = "v2.3.0-Beta";
 
   const handleSecretTrigger = () => {
     const nextCount = secretClicks + 1;
@@ -67,7 +70,6 @@ const Settings: React.FC<SettingsProps> = ({
       soundService.stopBGM();
       setIsSecretPlaying(false);
     } else {
-      // Direct await on user interaction is critical for some browsers to allow AudioContext resume
       await soundService.startBGM('SECRET');
       setIsSecretPlaying(true);
     }
@@ -316,6 +318,10 @@ const Settings: React.FC<SettingsProps> = ({
                 <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-slate-700">
                     <span className="font-bold uppercase text-xs tracking-widest">Slot Machine Reveal</span>
                     <button onClick={() => setSlotMachineEnabled(!slotMachineEnabled)} className={`w-12 h-6 rounded-full relative transition-all ${slotMachineEnabled ? 'bg-indigo-600' : 'bg-slate-700'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${slotMachineEnabled ? 'left-7' : 'left-1'}`} /></button>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-slate-700">
+                    <span className="font-bold uppercase text-xs tracking-widest">Confirm "I Remember"</span>
+                    <button onClick={() => setRequireRememberConfirmation(!requireRememberConfirmation)} className={`w-12 h-6 rounded-full relative transition-all ${requireRememberConfirmation ? 'bg-indigo-600' : 'bg-slate-700'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${requireRememberConfirmation ? 'left-7' : 'left-1'}`} /></button>
                 </div>
               </div>
             </div>

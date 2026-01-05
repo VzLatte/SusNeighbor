@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Player } from '../types';
 import { soundService } from '../services/soundService';
 
@@ -10,12 +10,19 @@ interface PassPhoneProps {
 }
 
 const PassPhone: React.FC<PassPhoneProps> = ({ nextPlayer, onConfirm, soundEnabled }) => {
+  const [confirmedMemory, setConfirmedMemory] = useState(false);
+  const settings = localStorage.getItem('imposter_settings');
+  const requireConfirm = settings ? JSON.parse(settings).requireRememberConfirmation : true;
+
   useEffect(() => {
     if (soundEnabled) {
       soundService.playPass();
     }
   }, [soundEnabled, nextPlayer.id]);
 
+  // If setting disabled, we skip the memory check logic effectively by defaulting true,
+  // but the UI flow handles it.
+  
   return (
     <div className="flex-1 flex flex-col items-center justify-center space-y-12 animate-in fade-in duration-300">
       <div className="text-center space-y-4">
@@ -29,12 +36,24 @@ const PassPhone: React.FC<PassPhoneProps> = ({ nextPlayer, onConfirm, soundEnabl
         <div className="text-5xl font-black text-indigo-500 py-2">{nextPlayer.name}</div>
       </div>
 
-      <button 
-        onClick={onConfirm}
-        className="w-full py-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-2xl shadow-xl shadow-indigo-500/20 active:scale-95 transition-transform"
-      >
-        I AM {nextPlayer.name.toUpperCase()}
-      </button>
+      {requireConfirm && !confirmedMemory ? (
+        <button 
+          onClick={() => {
+            if (soundEnabled) soundService.playClick();
+            setConfirmedMemory(true);
+          }}
+          className="w-full py-6 bg-slate-800 border-2 border-indigo-500/30 text-indigo-400 hover:bg-slate-700 rounded-3xl font-black text-lg transition-all"
+        >
+          I have memorized my word
+        </button>
+      ) : (
+        <button 
+          onClick={onConfirm}
+          className="w-full py-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-2xl shadow-xl shadow-indigo-500/20 active:scale-95 transition-transform"
+        >
+          I AM {nextPlayer.name.toUpperCase()}
+        </button>
+      )}
     </div>
   );
 };

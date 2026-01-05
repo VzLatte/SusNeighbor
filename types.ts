@@ -5,6 +5,7 @@ export enum Role {
   MR_WHITE = 'Mr. White',
   ANARCHIST = 'Anarchist',
   MIMIC = 'The Mimic',
+  BOUNTY_HUNTER = 'Bounty Hunter',
   ORACLE = 'The Oracle'
 }
 
@@ -74,7 +75,7 @@ export interface Player {
   assignedProject2?: string; // For Pair mode
   inquestAnswers: string[]; 
   investmentSpend?: InvestmentSpend;
-  oracleTargetName?: string; // For the Oracle role
+  oracleInfo?: string; // Changed from targetName to generic info string
   credits: number;
   activePower?: PowerUp;
   activeRisk?: RiskContract;
@@ -134,7 +135,7 @@ export interface GameContext {
   mainMode: MainMode;
   realProject: string;
   location: string;
-  category?: string; // Added for Terms/Pair visibility
+  category?: string;
   catchRule?: string; 
   tabooConstraint?: string; 
   imposterProject: string;
@@ -151,6 +152,7 @@ export interface GameContext {
   availablePowers: PowerUp[];
   virusWord?: string;
   noiseWords?: string[];
+  evilTeamCount: number; // Added to track total bad guys
 }
 
 export type GamePhase = 

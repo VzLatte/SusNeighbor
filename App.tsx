@@ -278,6 +278,12 @@ const App: React.FC = () => {
                     <div className="text-center space-y-4">
                       <p className="text-slate-400 uppercase font-black text-[10px] tracking-widest">Discussion Initiated By:</p>
                       <div className="text-5xl font-black text-indigo-500 tracking-tighter">{game.gameContext?.startingPlayerName}</div>
+                      {game.gameContext?.evilTeamCount !== undefined && (
+                          <div className="mt-4 p-3 bg-pink-900/20 border border-pink-500/30 rounded-2xl inline-block">
+                              <p className="text-[10px] font-black uppercase text-pink-500 tracking-widest">Hostiles Detected</p>
+                              <p className="text-2xl font-black text-white">{game.gameContext.evilTeamCount}</p>
+                          </div>
+                      )}
                     </div>
                     <button onClick={() => game.setPhase('MEETING')} className="w-full py-6 bg-indigo-600 text-white rounded-3xl font-black text-2xl shadow-xl border-b-4 border-indigo-900 active:scale-95 transition-all">OPEN COMMS</button>
                 </div>
@@ -287,9 +293,16 @@ const App: React.FC = () => {
               {game.phase === 'VOTING' && (
                 <Voting 
                   players={game.players} 
+                  soundEnabled={game.soundEnabled}
                   onSelect={(selected) => { 
                     game.setLastEliminatedPlayer(selected); 
-                    const hasActiveMimic = game.players.some(p => p.role === Role.MIMIC && p.id !== selected.id);
+                    const hasActiveMimic = game.players.some(p => p.role === Role.MIMIC && p.id !== selected.id); 
+                    // Note: This 'Mimic' check is for old mimic logic (steal). 
+                    // New logic implies if we found the bad guys, we win. 
+                    // But if selected is Mr White, do we Last Stand?
+                    // If selected is Imposter, Neighbors win.
+                    // If selected is Anarchist, Anarchist wins.
+                    // If selected is Neighbor, Imposters win.
 
                     if (selected.role === Role.ANARCHIST) { 
                       game.setOutcome({ winner: 'ANARCHIST', reason: `${selected.name} was the Anarchist!` }); 
@@ -297,27 +310,26 @@ const App: React.FC = () => {
                       game.setPhase('RESULTS'); 
                     } 
                     else if (selected.role === Role.MIMIC) {
-                      // Mimic was caught, they get one final guess
-                      game.setPhase('MIMIC_GUESS');
+                      // Imposter team Mimic caught.
+                      // Treat as Imposter caught.
+                      game.setOutcome({ winner: 'NEIGHBORS', reason: `${selected.name} was The Mimic! Threat neutralized.` });
+                      game.awardPoints('NEIGHBORS', 'Threat removed');
+                      game.setPhase('RESULTS');
                     }
                     else if (selected.role === Role.IMPOSTER) {
                       if (game.gameContext?.hasOracleActive) {
-                        game.setPhase('LAST_STAND');
+                        game.setPhase('LAST_STAND'); // Legacy Oracle check
                       } else {
-                        // Imposter caught, but does a Mimic steal?
-                        if (hasActiveMimic) {
-                            game.setPhase('MIMIC_GUESS');
-                        } else {
-                            game.setOutcome({ winner: 'NEIGHBORS', reason: `${selected.name} was the Imposter! Neighbors secure the win.` });
-                            game.awardPoints('NEIGHBORS', 'Threat removed');
-                            game.setPhase('RESULTS');
-                        }
+                         game.setOutcome({ winner: 'NEIGHBORS', reason: `${selected.name} was the Imposter! Neighbors secure the win.` });
+                         game.awardPoints('NEIGHBORS', 'Threat removed');
+                         game.setPhase('RESULTS');
                       }
                     }
                     else if (selected.role === Role.MR_WHITE) {
                       game.setPhase('LAST_STAND'); 
                     }
                     else { 
+                      // Innocent caught (Neighbor, Oracle, Bounty Hunter)
                       game.setOutcome({ winner: 'IMPOSTERS', reason: `Eliminated ${selected.name} (${selected.role}). Civilian error.` }); 
                       game.awardPoints('IMPOSTERS', 'Innocent out'); 
                       game.setPhase('RESULTS'); 
@@ -338,15 +350,9 @@ const App: React.FC = () => {
                             game.setOutcome({ winner: 'IMPOSTERS', reason: 'Target identified.' }); 
                             game.setPhase('RESULTS');
                         } else { 
-                            // Last Stand failed, Neighbors should win, but check for Mimic steal
-                            const hasActiveMimic = game.players.some(p => p.role === Role.MIMIC && p.id !== game.lastEliminatedPlayer?.id);
-                            if (hasActiveMimic) {
-                                game.setPhase('MIMIC_GUESS');
-                            } else {
-                                game.setOutcome({ winner: 'NEIGHBORS', reason: 'Failed identification. Neighbors hold the line.' }); 
-                                game.awardPoints('NEIGHBORS', 'Civ victory'); 
-                                game.setPhase('RESULTS'); 
-                            }
+                            game.setOutcome({ winner: 'NEIGHBORS', reason: 'Failed identification. Neighbors hold the line.' }); 
+                            game.awardPoints('NEIGHBORS', 'Civ victory'); 
+                            game.setPhase('RESULTS'); 
                         } 
                     }} 
                     soundEnabled={game.soundEnabled} 
