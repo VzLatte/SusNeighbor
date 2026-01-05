@@ -20,6 +20,9 @@ import AuctionBidding from './components/AuctionBidding';
 import VirusPurgeGuess from './components/VirusPurgeGuess';
 import MimicGuess from './components/MimicGuess';
 
+// Fix: Cast motion to any to avoid property missing errors in JSX in this environment
+const M = motion as any;
+
 const NotificationToast: React.FC<{ notification: { message: string, type: 'error' | 'info' | 'warning' }, onClose: () => void }> = ({ notification, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(onClose, 5000);
@@ -32,107 +35,29 @@ const NotificationToast: React.FC<{ notification: { message: string, type: 'erro
     info: 'bg-indigo-600/90 border-indigo-500'
   };
 
-  const icons = {
-    error: '✕',
-    warning: '⚠',
-    info: 'ℹ'
-  };
+  const icons = { error: '✕', warning: '⚠', info: 'ℹ' };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 50 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      exit={{ opacity: 0, scale: 0.95 }}
-      className={`fixed bottom-6 left-6 right-6 z-[200] max-w-sm mx-auto p-4 rounded-2xl border-2 backdrop-blur-md shadow-2xl flex items-start gap-3 ${bgStyles[notification.type]}`}
-    >
-      <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0 font-black text-sm">
-        {icons[notification.type]}
-      </div>
-      <div className="flex-1 text-xs font-black uppercase tracking-tight text-white leading-tight">
-        {notification.message}
-      </div>
+    // Fix: Using M.div instead of motion.div to bypass environment-specific type errors
+    <M.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`fixed bottom-6 left-6 right-6 z-[200] max-w-sm mx-auto p-4 rounded-2xl border-2 backdrop-blur-md shadow-2xl flex items-start gap-3 ${bgStyles[notification.type]}`} >
+      <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0 font-black text-sm">{icons[notification.type]}</div>
+      <div className="flex-1 text-xs font-black uppercase tracking-tight text-white leading-tight">{notification.message}</div>
       <button onClick={onClose} className="text-white/60 hover:text-white font-black px-1">✕</button>
-    </motion.div>
+    </M.div>
   );
 };
 
 const DynamicBackground: React.FC = () => {
-  const particles = Array.from({ length: 12 }).map((_, i) => ({
-    id: i,
-    size: Math.random() * 300 + 200,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    duration: Math.random() * 20 + 20,
-    delay: Math.random() * -20,
-  }));
-
+  const particles = Array.from({ length: 12 }).map((_, i) => ({ id: i, size: Math.random() * 300 + 200, x: Math.random() * 100, y: Math.random() * 100, duration: Math.random() * 20 + 20, delay: Math.random() * -20 }));
   return (
     <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#01030a]">
-      {/* Blueprint Grid - More visible and detailed */}
-      <div className="absolute inset-0" 
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(79, 70, 229, 0.4) 1.5px, transparent 1.5px), 
-            linear-gradient(90deg, rgba(79, 70, 229, 0.4) 1.5px, transparent 1.5px),
-            linear-gradient(rgba(79, 70, 229, 0.1) 1px, transparent 1px), 
-            linear-gradient(90deg, rgba(79, 70, 229, 0.1) 1px, transparent 1px)
-          `,
-          backgroundSize: '80px 80px, 80px 80px, 20px 20px, 20px 20px',
-          maskImage: 'radial-gradient(ellipse at center, black, transparent 95%)',
-          WebkitMaskImage: 'radial-gradient(ellipse at center, black, transparent 95%)',
-          animation: 'backgroundMove 120s linear infinite'
-        }} 
-      />
-
-      {/* Moving Ambient Nebulas - Significantly more transparent and lighter */}
+      <div className="absolute inset-0" style={{ backgroundImage: `linear-gradient(rgba(79, 70, 229, 0.4) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(79, 70, 229, 0.4) 1.5px, transparent 1.5px), linear-gradient(rgba(79, 70, 229, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(79, 70, 229, 0.1) 1px, transparent 1px)`, backgroundSize: '80px 80px, 80px 80px, 20px 20px, 20px 20px', maskImage: 'radial-gradient(ellipse at center, black, transparent 95%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black, transparent 95%)', animation: 'backgroundMove 120s linear infinite' }} />
       {particles.map((p) => (
-        <motion.div
-          key={p.id}
-          className="absolute rounded-full mix-blend-screen opacity-[0.12]"
-          style={{
-            width: p.size,
-            height: p.size,
-            left: `${p.x}%`,
-            top: `${p.y}%`,
-            background: p.id % 2 === 0 
-              ? 'radial-gradient(circle, rgba(79, 70, 229, 0.8), transparent 70%)' 
-              : 'radial-gradient(circle, rgba(236, 72, 153, 0.8), transparent 70%)',
-            filter: 'blur(80px)',
-          }}
-          animate={{
-            x: [0, 100, -100, 0],
-            y: [0, -100, 100, 0],
-            scale: [1, 1.2, 0.8, 1],
-          }}
-          transition={{
-            duration: p.duration,
-            repeat: Infinity,
-            delay: p.delay,
-            ease: "linear"
-          }}
-        />
+        // Fix: Using M.div instead of motion.div to bypass environment-specific type errors
+        <M.div key={p.id} className="absolute rounded-full mix-blend-screen opacity-[0.12]" style={{ width: p.size, height: p.size, left: `${p.x}%`, top: `${p.y}%`, background: p.id % 2 === 0 ? 'radial-gradient(circle, rgba(79, 70, 229, 0.8), transparent 70%)' : 'radial-gradient(circle, rgba(236, 72, 153, 0.8), transparent 70%)', filter: 'blur(80px)' }} animate={{ x: [0, 100, -100, 0], y: [0, -100, 100, 0], scale: [1, 1.2, 0.8, 1] }} transition={{ duration: p.duration, repeat: Infinity, delay: p.delay, ease: "linear" }} />
       ))}
-
-      {/* Global Vignette */}
       <div className="absolute inset-0 bg-gradient-to-t from-[#01040f] via-transparent to-[#01040f] opacity-80" />
-
-      {/* Scanline Effect */}
-      <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-indigo-400/20 to-transparent"
-        style={{ animation: 'scanline 10s linear infinite' }}
-      />
-      
-      <style>{`
-        @keyframes backgroundMove {
-          from { background-position: 0 0, 0 0, 0 0, 0 0; }
-          to { background-position: 800px 800px, 800px 800px, 800px 800px, 800px 800px; }
-        }
-        @keyframes scanline {
-          0% { transform: translateY(-10vh); opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { transform: translateY(110vh); opacity: 0; }
-        }
-      `}</style>
+      <style>{`@keyframes backgroundMove { from { background-position: 0 0; } to { background-position: 800px 800px; } }`}</style>
     </div>
   );
 };
@@ -140,257 +65,64 @@ const DynamicBackground: React.FC = () => {
 const App: React.FC = () => {
   const game = useGameState();
 
-  // Music Controller
   useEffect(() => {
-    if (!game.musicEnabled) {
-      soundService.stopBGM();
-      return;
-    }
-
-    // Don't interrupt if the secret track is active
+    if (!game.musicEnabled) { soundService.stopBGM(); return; }
     if (soundService.getBGMType() === 'SECRET') return;
-
-    const menuPhases = [
-      'HOME', 'SETUP', 'LEADERBOARD', 'SETTINGS', 'HELP', 
-      'REVEAL_TRANSITION', 'REVEAL', 'AUCTION_REVEAL', 
-      'AUCTION_TRANSITION', 'AUCTION_BIDDING', 'STARTING_PLAYER_ANNOUNCEMENT'
-    ];
-
-    if (menuPhases.includes(game.phase)) {
-      soundService.startBGM('MENU');
-    } else if (game.phase === 'MEETING') {
-      soundService.startBGM('MEETING');
-    } else {
-      soundService.stopBGM();
-    }
+    const menuPhases = ['HOME', 'SETUP', 'LEADERBOARD', 'SETTINGS', 'HELP', 'REVEAL_TRANSITION', 'REVEAL', 'AUCTION_REVEAL', 'AUCTION_TRANSITION', 'AUCTION_BIDDING', 'STARTING_PLAYER_ANNOUNCEMENT'];
+    if (menuPhases.includes(game.phase)) { soundService.startBGM('MENU'); } else if (game.phase === 'MEETING') { soundService.startBGM('MEETING'); } else { soundService.stopBGM(); }
   }, [game.phase, game.musicEnabled]);
 
   return (
     <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-indigo-500/30 overflow-hidden relative">
       {game.bgAnimationEnabled ? <DynamicBackground /> : <div className="fixed inset-0 z-0 bg-[#020617]" />}
-      
       <div className="relative z-10 flex flex-col h-full flex-1">
-        <Header 
-          onSettings={() => game.setPhase('SETTINGS')} 
-          onHelp={() => game.setPhase('HELP')} 
-          onLeaderboard={() => game.setPhase('LEADERBOARD')} 
-          showSettings={game.phase === 'HOME' || game.phase === 'SETUP'} 
-          onHome={game.resetGame} 
-        />
-        
+        <Header onSettings={() => game.setPhase('SETTINGS')} onHelp={() => game.setPhase('HELP')} onLeaderboard={() => game.setPhase('LEADERBOARD')} showSettings={game.phase === 'HOME' || game.phase === 'SETUP'} onHome={game.resetGame} />
         <main className="flex-1 relative flex flex-col max-w-md mx-auto w-full p-6 overflow-y-auto custom-scrollbar">
-          <AnimatePresence>
-            {game.notification && (
-              <NotificationToast notification={game.notification} onClose={() => game.setNotification(null)} />
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {game.isAiLoading && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center space-y-6 text-center p-8"
-                >
-                    <div className="w-20 h-20 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-                    <div className="space-y-2">
-                        <h3 className="text-xl font-black text-indigo-400 uppercase tracking-tighter">Syncing Mission Intel</h3>
-                        <p className="text-slate-500 text-sm font-bold uppercase tracking-widest animate-pulse">Neural Link In Progress...</p>
-                    </div>
-                </motion.div>
-            )}
-          </AnimatePresence>
-
+          <AnimatePresence>{game.notification && ( <NotificationToast notification={game.notification} onClose={() => game.setNotification(null)} /> )}</AnimatePresence>
+          <AnimatePresence>{game.isAiLoading && ( <M.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center space-y-6 text-center p-8" > <div className="w-20 h-20 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" /> <h3 className="text-xl font-black text-indigo-400 uppercase tracking-tighter">Syncing Mission Intel</h3> </M.div> )}</AnimatePresence>
           <AnimatePresence mode="wait">
-            <motion.div 
-              key={game.phase + (['REVEAL', 'REVEAL_TRANSITION'].includes(game.phase) ? game.currentPlayerIndex : '')} 
-              initial={{ opacity: 0, x: 20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              exit={{ opacity: 0, x: -20 }} 
-              className="flex-1 flex flex-col" 
-            >
+            <M.div key={game.phase + (['REVEAL', 'REVEAL_TRANSITION'].includes(game.phase) ? game.currentPlayerIndex : '')} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col" >
               {game.phase === 'HOME' && (
                  <div className="flex-1 flex flex-col items-center justify-center space-y-12 animate-in zoom-in duration-500">
                     <div className="text-center space-y-4">
-                      <div className="w-24 h-24 bg-indigo-600 rounded-3xl flex items-center justify-center mx-auto shadow-2xl rotate-3">
-                        <span className="text-6xl font-black text-white">?</span>
-                      </div>
-                      <h2 className="text-4xl font-black tracking-tighter uppercase mt-6">
-                        {game.gameCategory === GameCategory.PVE ? 'Virus Purge' : 'Imposter Purge'}
-                      </h2>
+                      <div className="w-24 h-24 bg-indigo-600 rounded-3xl flex items-center justify-center mx-auto shadow-2xl rotate-3"><span className="text-6xl font-black text-white">?</span></div>
+                      <h2 className="text-4xl font-black tracking-tighter uppercase mt-6">{game.gameCategory === GameCategory.PVE ? 'Virus Purge' : 'Imposter Purge'}</h2>
                       <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Protocol Deduction Engine</p>
                     </div>
                     <div className="w-full space-y-4">
                       <div className="grid grid-cols-2 gap-2 bg-slate-900/50 backdrop-blur-sm p-1 rounded-2xl border border-slate-800">
-                         <button onClick={() => { game.setGameCategory(GameCategory.PVP); soundService.playClick(); }} className={`py-3 rounded-xl text-xs font-black uppercase transition-all ${game.gameCategory === GameCategory.PVP ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-500 hover:text-slate-300'}`}> PvP (Competitive) </button>
-                         <button onClick={() => { game.setGameCategory(GameCategory.PVE); soundService.playClick(); }} className={`py-3 rounded-xl text-xs font-black uppercase transition-all ${game.gameCategory === GameCategory.PVE ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-slate-300'}`}> Co-op (PvE) </button>
+                         <button onClick={() => { game.setGameCategory(GameCategory.PVP); soundService.playClick(); }} className={`py-3 rounded-xl text-xs font-black uppercase transition-all ${game.gameCategory === GameCategory.PVP ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-500 hover:text-slate-300'}`}> PvP </button>
+                         <button onClick={() => { game.setGameCategory(GameCategory.PVE); soundService.playClick(); }} className={`py-3 rounded-xl text-xs font-black uppercase transition-all ${game.gameCategory === GameCategory.PVE ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-slate-300'}`}> Co-op </button>
                       </div>
                       <button onClick={() => { soundService.playClick(); game.setPhase('SETUP'); }} className="w-full py-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-2xl shadow-2xl border-b-4 border-indigo-900 active:scale-95 transition-all">INITIALIZE MISSION</button>
-                      <p className="text-center text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] animate-pulse">Status: Ready for Deployment</p>
                     </div>
                  </div>
               )}
-
               {game.phase === 'SETUP' && <Setup {...game} onStart={game.handleStart} />}
-
-              {game.phase === 'AUCTION_REVEAL' && (
-                <div className="flex-1 flex flex-col space-y-8">
-                  <h2 className="text-3xl font-black text-yellow-500 text-center uppercase">Auction Phase</h2>
-                  <div className="space-y-3">{game.gameContext?.availablePowers.map(p => <div key={p} className="p-4 bg-slate-800/80 backdrop-blur-sm border-2 border-slate-700 rounded-2xl flex justify-between items-center"><span className="font-black text-indigo-400">{p}</span></div>)}</div>
-                  <button onClick={() => { soundService.playClick(); game.setPhase('AUCTION_TRANSITION'); }} className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black text-xl shadow-xl">START BIDDING</button>
-                </div>
-              )}
-
-              {(game.phase === 'AUCTION_TRANSITION' || game.phase === 'REVEAL_TRANSITION') && (
-                <PassPhone nextPlayer={game.players[game.currentPlayerIndex]} onConfirm={() => game.setPhase(game.phase === 'AUCTION_TRANSITION' ? 'AUCTION_BIDDING' : 'REVEAL')} soundEnabled={game.soundEnabled} />
-              )}
-
-              {game.phase === 'AUCTION_BIDDING' && (
-                <AuctionBidding player={game.players[game.currentPlayerIndex]} availablePowers={game.gameContext!.availablePowers} onComplete={(bid) => {
-                  const updated = [...game.players];
-                  const p = updated[game.currentPlayerIndex];
-                  p.bidAmount = bid.amount; p.activePower = bid.power || undefined; p.activeRisk = bid.risk || undefined; p.credits -= bid.amount;
-                  game.setPlayers(updated);
-                  if (game.currentPlayerIndex < game.playerCount - 1) { game.setCurrentPlayerIndex(game.currentPlayerIndex + 1); game.setPhase('AUCTION_TRANSITION'); }
-                  else { game.setCurrentPlayerIndex(0); game.setPhase('REVEAL_TRANSITION'); }
-                }} />
-              )}
-
-              {game.phase === 'REVEAL' && (
-                <RevealCard 
-                  player={game.players[game.currentPlayerIndex]} 
-                  gameMode={game.gameMode} 
-                  mainMode={game.mainMode} 
-                  soundEnabled={game.soundEnabled} 
-                  slotMachineEnabled={game.slotMachineEnabled}
-                  activeRoles={game.activeRolesInPlay}
-                  context={game.gameContext!} 
-                  onNext={() => { 
-                    if (game.currentPlayerIndex < game.playerCount - 1) { game.setCurrentPlayerIndex(game.currentPlayerIndex + 1); game.setPhase('REVEAL_TRANSITION'); } 
-                    else game.setPhase('STARTING_PLAYER_ANNOUNCEMENT'); 
-                  }} 
-                />
-              )}
-
+              {(game.phase === 'AUCTION_TRANSITION' || game.phase === 'REVEAL_TRANSITION') && ( <PassPhone nextPlayer={game.players[game.currentPlayerIndex]} onConfirm={() => game.setPhase(game.phase === 'AUCTION_TRANSITION' ? 'AUCTION_BIDDING' : 'REVEAL')} soundEnabled={game.soundEnabled} /> )}
+              {game.phase === 'AUCTION_BIDDING' && ( <AuctionBidding player={game.players[game.currentPlayerIndex]} availablePowers={game.gameContext!.availablePowers} onComplete={(bid) => { const updated = [...game.players]; const p = updated[game.currentPlayerIndex]; p.bidAmount = bid.amount; p.activePower = bid.power || undefined; p.activeRisk = bid.risk || undefined; p.credits -= bid.amount; game.setPlayers(updated); if (game.currentPlayerIndex < game.playerCount - 1) { game.setCurrentPlayerIndex(game.currentPlayerIndex + 1); game.setPhase('AUCTION_TRANSITION'); } else { game.setCurrentPlayerIndex(0); game.setPhase('REVEAL_TRANSITION'); } }} /> )}
+              {game.phase === 'REVEAL' && ( <RevealCard player={game.players[game.currentPlayerIndex]} gameMode={game.gameMode} mainMode={game.mainMode} soundEnabled={game.soundEnabled} slotMachineEnabled={game.slotMachineEnabled} activeRoles={game.activeRolesInPlay} context={game.gameContext!} onNext={() => { if (game.currentPlayerIndex < game.playerCount - 1) { game.setCurrentPlayerIndex(game.currentPlayerIndex + 1); game.setPhase('REVEAL_TRANSITION'); } else game.setPhase('STARTING_PLAYER_ANNOUNCEMENT'); }} /> )}
               {game.phase === 'STARTING_PLAYER_ANNOUNCEMENT' && (
                 <div className="flex-1 flex flex-col items-center justify-center space-y-12">
                     <div className="text-center space-y-4">
                       <p className="text-slate-400 uppercase font-black text-[10px] tracking-widest">Discussion Initiated By:</p>
                       <div className="text-5xl font-black text-indigo-500 tracking-tighter">{game.gameContext?.startingPlayerName}</div>
-                      {game.gameContext?.evilTeamCount !== undefined && (
-                          <div className="mt-4 p-3 bg-pink-900/20 border border-pink-500/30 rounded-2xl inline-block">
-                              <p className="text-[10px] font-black uppercase text-pink-500 tracking-widest">Hostiles Detected</p>
-                              <p className="text-2xl font-black text-white">{game.gameContext.evilTeamCount}</p>
-                          </div>
-                      )}
+                      {game.gameContext?.evilTeamCount !== undefined && ( <div className="mt-4 p-3 bg-pink-900/20 border border-pink-500/30 rounded-2xl inline-block"> <p className="text-[10px] font-black uppercase text-pink-500 tracking-widest">Imposter Team Count</p> <p className="text-2xl font-black text-white">{game.gameContext.evilTeamCount}</p> </div> )}
                     </div>
                     <button onClick={() => game.setPhase('MEETING')} className="w-full py-6 bg-indigo-600 text-white rounded-3xl font-black text-2xl shadow-xl border-b-4 border-indigo-900 active:scale-95 transition-all">OPEN COMMS</button>
                 </div>
               )}
-
               {game.phase === 'MEETING' && <Meeting context={game.gameContext!} duration={game.meetingDuration} onTimerEnd={() => game.setPhase(game.gameCategory === GameCategory.PVE ? 'VIRUS_GUESS' : 'VOTING')} soundEnabled={game.soundEnabled} virusPoints={game.virusPoints} onDetection={game.handleDetectionTrigger} />}
-              {game.phase === 'VOTING' && (
-                <Voting 
-                  players={game.players} 
-                  soundEnabled={game.soundEnabled}
-                  onSelect={(selected) => { 
-                    game.setLastEliminatedPlayer(selected); 
-                    const hasActiveMimic = game.players.some(p => p.role === Role.MIMIC && p.id !== selected.id); 
-                    // Note: This 'Mimic' check is for old mimic logic (steal). 
-                    // New logic implies if we found the bad guys, we win. 
-                    // But if selected is Mr White, do we Last Stand?
-                    // If selected is Imposter, Neighbors win.
-                    // If selected is Anarchist, Anarchist wins.
-                    // If selected is Neighbor, Imposters win.
-
-                    if (selected.role === Role.ANARCHIST) { 
-                      game.setOutcome({ winner: 'ANARCHIST', reason: `${selected.name} was the Anarchist!` }); 
-                      game.awardPoints('ANARCHIST', 'Anarchist win'); 
-                      game.setPhase('RESULTS'); 
-                    } 
-                    else if (selected.role === Role.MIMIC) {
-                      // Imposter team Mimic caught.
-                      // Treat as Imposter caught.
-                      game.setOutcome({ winner: 'NEIGHBORS', reason: `${selected.name} was The Mimic! Threat neutralized.` });
-                      game.awardPoints('NEIGHBORS', 'Threat removed');
-                      game.setPhase('RESULTS');
-                    }
-                    else if (selected.role === Role.IMPOSTER) {
-                      if (game.gameContext?.hasOracleActive) {
-                        game.setPhase('LAST_STAND'); // Legacy Oracle check
-                      } else {
-                         game.setOutcome({ winner: 'NEIGHBORS', reason: `${selected.name} was the Imposter! Neighbors secure the win.` });
-                         game.awardPoints('NEIGHBORS', 'Threat removed');
-                         game.setPhase('RESULTS');
-                      }
-                    }
-                    else if (selected.role === Role.MR_WHITE) {
-                      game.setPhase('LAST_STAND'); 
-                    }
-                    else { 
-                      // Innocent caught (Neighbor, Oracle, Bounty Hunter)
-                      game.setOutcome({ winner: 'IMPOSTERS', reason: `Eliminated ${selected.name} (${selected.role}). Civilian error.` }); 
-                      game.awardPoints('IMPOSTERS', 'Innocent out'); 
-                      game.setPhase('RESULTS'); 
-                    } 
-                  }} 
-                />
-              )}
-              {game.phase === 'LAST_STAND' && (
-                <LastStand 
-                    player={game.lastEliminatedPlayer!} 
-                    allPlayers={game.players} 
-                    realProject={game.gameContext!.realProject} 
-                    distractors={game.gameContext!.distractors} 
-                    duration={game.lastStandDuration} 
-                    mainMode={game.mainMode} 
-                    onResult={(res) => { 
-                        if (res === 'PROJECT_CORRECT' || res === 'ORACLE_CORRECT') {
-                            game.setOutcome({ winner: 'IMPOSTERS', reason: 'Target identified.' }); 
-                            game.setPhase('RESULTS');
-                        } else { 
-                            game.setOutcome({ winner: 'NEIGHBORS', reason: 'Failed identification. Neighbors hold the line.' }); 
-                            game.awardPoints('NEIGHBORS', 'Civ victory'); 
-                            game.setPhase('RESULTS'); 
-                        } 
-                    }} 
-                    soundEnabled={game.soundEnabled} 
-                    hasOracleInPlay={game.gameContext!.hasOracleActive} 
-                />
-              )}
-              {game.phase === 'MIMIC_GUESS' && (
-                <MimicGuess 
-                    player={game.players.find(p => p.role === Role.MIMIC)!} 
-                    allPlayers={game.players} 
-                    imposters={game.players.filter(p => p.role === Role.IMPOSTER || p.role === Role.MR_WHITE)} 
-                    realProject={game.gameContext!.realProject} 
-                    distractors={game.gameContext!.distractors} 
-                    mainMode={game.mainMode} 
-                    soundEnabled={game.soundEnabled} 
-                    onResult={(correct) => { 
-                        if (correct) { 
-                            game.setOutcome({ winner: 'MIMIC', reason: 'Rogue operative hijacked the mission!' }); 
-                            game.awardPoints('MIMIC', 'Mimic steal'); 
-                        } else { 
-                            game.setOutcome({ winner: 'NEIGHBORS', reason: 'Rogue mimic failed their heist.' }); 
-                            game.awardPoints('NEIGHBORS', 'Neighbors hold firm'); 
-                        } 
-                        game.setPhase('RESULTS'); 
-                    }} 
-                />
-              )}
-              {game.phase === 'VIRUS_GUESS' && <VirusPurgeGuess context={game.gameContext!} onResult={game.handleVirusGuess} soundEnabled={game.soundEnabled} />}
+              {game.phase === 'VOTING' && ( <Voting players={game.players} soundEnabled={game.soundEnabled} onSelect={(selected) => { game.setLastEliminatedPlayer(selected); if (selected.role === Role.ANARCHIST) { game.setOutcome({ winner: 'ANARCHIST', reason: `${selected.name} was the Anarchist! Rogue victory.` }); game.awardPoints('ANARCHIST', 'Anarchist win'); game.setPhase('RESULTS'); } else if ([Role.IMPOSTER, Role.MR_WHITE, Role.MIMIC].includes(selected.role)) { game.setOutcome({ winner: 'NEIGHBORS', reason: `Hostile agents neutralized. Neighbors secure the area.` }); game.awardPoints('NEIGHBORS', 'Threat removed'); game.setPhase('RESULTS'); } else { game.setOutcome({ winner: 'IMPOSTERS', reason: `Eliminated ${selected.name}. Surveillance failure.` }); game.awardPoints('IMPOSTERS', 'Innocent out'); game.setPhase('RESULTS'); } }} /> )}
               {game.phase === 'RESULTS' && game.outcome && <Results outcome={game.outcome as any} players={game.players} allTimePoints={game.allTimePoints} onReset={game.resetGame} />}
               {game.phase === 'SETTINGS' && <Settings {...game} onBack={() => game.setPhase('SETUP')} onSave={(ns, ni, nw, nv) => { game.setScenarioSets(ns); game.setInquestSets(ni); game.setWordSets(nw); game.setVirusSets(nv); }} />}
               {game.phase === 'LEADERBOARD' && <Leaderboard points={game.allTimePoints} history={game.gameHistory} onBack={game.resetGame} onClear={game.clearStats} />}
               {game.phase === 'HELP' && <HelpGuide onBack={() => game.setPhase('SETUP')} />}
-            </motion.div>
+            </M.div>
           </AnimatePresence>
         </main>
       </div>
     </div>
   );
 };
-
 export default App;

@@ -13,12 +13,10 @@ import { generateScenarioContext, generateVirusNoiseWords, generateAIPrompt } fr
 import { soundService } from '../services/soundService';
 
 export const useGameState = () => {
-  // Persistence Keys
   const POINTS_KEY = 'imposter_points';
   const HISTORY_KEY = 'imposter_history';
   const SETTINGS_KEY = 'imposter_settings';
 
-  // Game Configuration State
   const [phase, setPhase] = useState<GamePhase>('HOME');
   const [gameCategory, setGameCategory] = useState<GameCategory>(GameCategory.PVP);
   const [playerCount, setPlayerCount] = useState(INITIAL_PLAYER_COUNT);
@@ -26,7 +24,8 @@ export const useGameState = () => {
   const [imposterCount, setImposterCount] = useState(1);
   const [hasMrWhite, setHasMrWhite] = useState(false);
   const [hasAnarchist, setHasAnarchist] = useState(false);
-  const [hasMimic, setHasMimic] = useState(false); // Now "Bounty Hunter" toggle in UI essentially
+  const [hasMimic, setHasMimic] = useState(false); 
+  const [hasBountyHunter, setHasBountyHunter] = useState(false);
   const [hasOracle, setHasOracle] = useState(false);
   const [includeHints, setIncludeHints] = useState(true);
   const [includeTaboo, setIncludeTaboo] = useState(false);
@@ -39,7 +38,6 @@ export const useGameState = () => {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string, type: 'error' | 'info' | 'warning' } | null>(null);
 
-  // Advanced Role Config
   const [roleDistributionMode, setRoleDistributionMode] = useState<RoleDistributionMode>(RoleDistributionMode.STANDARD);
   const [customRoleConfig, setCustomRoleConfig] = useState<CustomRoleConfig>({
     neighborCount: 3,
@@ -51,7 +49,6 @@ export const useGameState = () => {
     maxSpecials: 1
   });
 
-  // Library/Sets State
   const [scenarioSets, setScenarioSets] = useState<ScenarioSet[]>([DEFAULT_SET]);
   const [activeSetIds, setActiveSetIds] = useState<string[]>(['default']);
   const [wordSets, setWordSets] = useState<WordSet[]>(DEFAULT_WORD_SETS);
@@ -61,7 +58,6 @@ export const useGameState = () => {
   const [virusSets, setVirusSets] = useState<VirusSet[]>([VIRUS_WORDS_SET]);
   const [activeVirusSetIds, setActiveVirusSetIds] = useState<string[]>(['virus-default']);
 
-  // Active Session State
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [gameContext, setGameContext] = useState<GameContext | null>(null);
@@ -69,7 +65,6 @@ export const useGameState = () => {
   const [virusPoints, setVirusPoints] = useState(0);
   const [lastEliminatedPlayer, setLastEliminatedPlayer] = useState<Player | null>(null);
 
-  // Settings
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [musicVolume, setMusicVolume] = useState(0.5);
@@ -79,7 +74,6 @@ export const useGameState = () => {
   const [meetingDuration, setMeetingDuration] = useState(120);
   const [lastStandDuration, setLastStandDuration] = useState(10);
 
-  // Load Settings
   useEffect(() => {
     try {
       const saved = localStorage.getItem(SETTINGS_KEY);
@@ -97,7 +91,6 @@ export const useGameState = () => {
     } catch (e) {}
   }, []);
 
-  // Save Settings
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({
       soundEnabled, musicEnabled, musicVolume, bgAnimationEnabled, slotMachineEnabled, 
@@ -105,12 +98,10 @@ export const useGameState = () => {
     }));
   }, [soundEnabled, musicEnabled, musicVolume, bgAnimationEnabled, slotMachineEnabled, requireRememberConfirmation, meetingDuration, lastStandDuration]);
 
-  // Sync music volume to sound service
   useEffect(() => {
     soundService.setBGMVolume(musicVolume);
   }, [musicVolume]);
 
-  // Persistent Stats
   const [allTimePoints, setAllTimePoints] = useState<{ [name: string]: number }>(() => {
     try {
       const saved = localStorage.getItem(POINTS_KEY);
@@ -125,7 +116,6 @@ export const useGameState = () => {
   });
   const [playerCredits, setPlayerCredits] = useState<{ [name: string]: number }>({});
 
-  // Fix for Imposter Count adaptation
   useEffect(() => {
     const maxImposters = Math.floor(playerCount / 2);
     if (imposterCount > maxImposters) {
@@ -151,7 +141,6 @@ export const useGameState = () => {
     });
   }, [playerCount]);
 
-  // Sync with Disk
   useEffect(() => {
     localStorage.setItem(POINTS_KEY, JSON.stringify(allTimePoints));
     localStorage.setItem(HISTORY_KEY, JSON.stringify(gameHistory));
@@ -180,11 +169,7 @@ export const useGameState = () => {
     players.forEach(p => {
       let won = false;
       let score = 10;
-
-      // Logic updated for new teams
-      // Imposter Team: Imposter, Mr. White, Mimic
       const isImposterTeam = p.role === Role.IMPOSTER || p.role === Role.MR_WHITE || p.role === Role.MIMIC;
-      // Neighbor Team: Neighbor, Oracle, Bounty Hunter
       const isNeighborTeam = p.role === Role.NEIGHBOR || p.role === Role.ORACLE || p.role === Role.BOUNTY_HUNTER;
 
       if (winner === 'NEIGHBORS' && isNeighborTeam) won = true;
@@ -193,9 +178,6 @@ export const useGameState = () => {
         if (p.role === Role.IMPOSTER && !includeHints) score = 20; 
       }
       if (winner === 'ANARCHIST' && p.role === Role.ANARCHIST) won = true;
-      if (winner === 'MIMIC' && p.role === Role.MIMIC) {
-        won = true; // Mimic wins with Imposters, but if specific steal condition (deprecated for new mimic), handled here
-      }
       if (winner === 'HUMANS') won = true;
 
       if (won) {
@@ -224,7 +206,6 @@ export const useGameState = () => {
       setPlayerCredits(initialCredits);
 
       if (gameCategory === GameCategory.PVE) {
-        // ... (PVE Logic remains mostly the same) ...
         let virusWord = "";
         let realWord = "";
         let noiseWords: string[] = ["System", "Code", "Breach"]; 
@@ -239,9 +220,8 @@ export const useGameState = () => {
               category = "AI Network Purge";
               const noiseData = await generateVirusNoiseWords(realWord, virusWord);
               if (noiseData?.noiseWords) noiseWords = noiseData.noiseWords;
-            } else throw new Error("Connection Timeout or Rate Limit");
+            } else throw new Error("AI Failure");
           } catch (e: any) {
-            console.warn("AI Failure, using fallback", e);
             const vs = virusSets[0];
             virusWord = vs.words[Math.floor(Math.random() * vs.words.length)];
             realWord = wordSets[0].pairs[0].wordA;
@@ -288,89 +268,56 @@ export const useGameState = () => {
         return;
       }
 
-      // PVP Logic
       const roles: Role[] = [];
-      const specialPool = [Role.MR_WHITE, Role.ANARCHIST, Role.BOUNTY_HUNTER, Role.MIMIC, Role.ORACLE].filter(r => {
-        if (r === Role.MR_WHITE) return hasMrWhite;
-        if (r === Role.ANARCHIST) return hasAnarchist;
-        // In Setup, "hasMimic" checkbox now technically enables "Bounty Hunter" (Neighbor team) 
-        // AND potentially allows the "Mimic" (Imposter Team). 
-        // For simplicity, let's say the checkbox enables BOTH "Bounty Hunter" AND "Mimic" in the pool.
-        // Or re-purpose the flag. Let's assume the user toggles specific special roles.
-        // For now, mapping `hasMimic` to `Role.BOUNTY_HUNTER` (Neighbor Side) based on request.
-        // AND we always add `Role.MIMIC` (Imposter Side) if `hasMrWhite` is on? Or just add it to pool?
-        // Let's add Mimic to pool if `hasMimic` is true, alongside Bounty Hunter.
-        if (r === Role.BOUNTY_HUNTER) return hasMimic; // Reuse flag for now
-        if (r === Role.MIMIC) return hasMimic; 
-        if (r === Role.ORACLE) return hasOracle;
-        return false;
-      });
-      
-      const activeSpecialPool = specialPool.length > 0 ? specialPool : [Role.MR_WHITE, Role.ANARCHIST];
-
-      // Distribute Roles
-      // We need to ensure we have Imposters.
       for (let i = 0; i < imposterCount; i++) roles.push(Role.IMPOSTER);
       
-      // Add Specials based on distribution
       if (roleDistributionMode === RoleDistributionMode.STANDARD) {
         if (hasMrWhite) roles.push(Role.MR_WHITE);
         if (hasAnarchist) roles.push(Role.ANARCHIST);
-        if (hasMimic) {
-            roles.push(Role.BOUNTY_HUNTER); // Neighbor Team
-            roles.push(Role.MIMIC); // Imposter Team
-        }
+        if (hasMimic) roles.push(Role.MIMIC);
+        if (hasBountyHunter) roles.push(Role.BOUNTY_HUNTER);
         if (hasOracle) roles.push(Role.ORACLE);
       } else {
-         // simplified custom/surprise logic - just pull from pool
-         // This might need refinement but keeping it simple for stability
-         const { specialCount } = customRoleConfig;
-         for(let i=0; i<specialCount; i++) {
-             roles.push(activeSpecialPool[Math.floor(Math.random() * activeSpecialPool.length)]);
-         }
+        const specialPool = [Role.MR_WHITE, Role.ANARCHIST, Role.BOUNTY_HUNTER, Role.MIMIC, Role.ORACLE].filter(r => {
+          if (r === Role.MR_WHITE) return hasMrWhite;
+          if (r === Role.ANARCHIST) return hasAnarchist;
+          if (r === Role.BOUNTY_HUNTER) return hasBountyHunter;
+          if (r === Role.MIMIC) return hasMimic;
+          if (r === Role.ORACLE) return hasOracle;
+          return false;
+        });
+        const { specialCount } = customRoleConfig;
+        for(let i=0; i<specialCount; i++) {
+          if (specialPool.length > 0) roles.push(specialPool[Math.floor(Math.random() * specialPool.length)]);
+        }
       }
 
       while (roles.length < playerCount) roles.push(Role.NEIGHBOR);
-      
-      // Trim if we exceeded player count (rare edge case with too many specials)
-      const finalRoles = roles.slice(0, playerCount); 
-      const shuffledRoles = [...finalRoles].sort(() => Math.random() - 0.5);
+      const shuffledRoles = [...roles].slice(0, playerCount).sort(() => Math.random() - 0.5);
       
       const availablePowers = Object.values(PowerUp).sort(() => Math.random() - 0.5).slice(0, 3);
-
-      let wordA = "Coffee", wordB = "Tea";
-      let location = "Terms Office", realProject = "Coffee", catchRule = "No sugar", category = "Unclassified";
-      let distractors: string[] = ["Library", "Park", "Gym"];
-      let imposterProject = "Tea";
+      let wordA = "Coffee", wordB = "Tea", location = "Terms Office", realProject = "Coffee", catchRule = "No sugar", category = "Unclassified";
+      let distractors: string[] = ["Library", "Park", "Gym"], imposterProject = "Tea";
 
       if (useAiMissions) {
         try {
           const aiPrompt = await generateAIPrompt(mainMode);
-          if (!aiPrompt) throw new Error("AI Null Response");
-          
-          if (mainMode === MainMode.TERMS || mainMode === MainMode.PAIR) {
-            wordA = aiPrompt?.wordA || wordA;
-            wordB = aiPrompt?.wordB || wordB;
-            realProject = wordA;
-            imposterProject = wordB;
-            category = "Neural Retrieval";
-          } else {
-            realProject = aiPrompt?.project || realProject;
-            location = aiPrompt?.location || location;
-            catchRule = aiPrompt?.catch || catchRule;
-            category = "Strategic Ops";
+          if (aiPrompt) {
+            if (mainMode === MainMode.TERMS || mainMode === MainMode.PAIR) {
+              wordA = aiPrompt?.wordA || wordA; wordB = aiPrompt?.wordB || wordB;
+              realProject = wordA; imposterProject = wordB; category = "Neural Retrieval";
+            } else {
+              realProject = aiPrompt?.project || realProject; location = aiPrompt?.location || location;
+              catchRule = aiPrompt?.catch || catchRule; category = "Strategic Ops";
+            }
           }
-        } catch (e: any) {
-          console.warn("AI Mission Gen Failed, fallback engaged.", e);
-        }
+        } catch (e: any) {}
       } else {
         if (mainMode === MainMode.TERMS || mainMode === MainMode.PAIR) {
           const activeSets = wordSets.filter(s => activeWordSetIds.includes(s.id));
           const randomSet = activeSets[Math.floor(Math.random() * activeSets.length)] || wordSets[0];
           const pair = randomSet.pairs[Math.floor(Math.random() * randomSet.pairs.length)];
-          wordA = pair.wordA; wordB = pair.wordB;
-          realProject = wordA; imposterProject = wordB;
-          category = randomSet.name;
+          wordA = pair.wordA; wordB = pair.wordB; realProject = wordA; imposterProject = wordB; category = randomSet.name;
         } else {
           const activeSets = scenarioSets.filter(s => activeSetIds.includes(s.id));
           const randomSet = activeSets[Math.floor(Math.random() * activeSets.length)] || scenarioSets[0];
@@ -381,132 +328,88 @@ export const useGameState = () => {
         }
       }
 
-      // Calculate Team Sizes
       const evilRoles = [Role.IMPOSTER, Role.MR_WHITE, Role.MIMIC];
       const evilTeamCount = shuffledRoles.filter(r => evilRoles.includes(r)).length;
 
-      // Context construction
-      let context: GameContext;
-      if (mainMode === MainMode.TERMS || mainMode === MainMode.PAIR) {
-        if (mainMode === MainMode.PAIR) {
-          const pool = [wordA, wordB, "Sugar", "Milk", "Honey"];
-          const chain = Array.from({length: playerCount}).map((_, i) => pool[i % pool.length]);
-          context = { mainMode, realProject: chain[0], imposterProject: '???', location: 'The Chain', category, distractors: pool.slice(0, 3), includeHints: false, hasOracleActive: shuffledRoles.includes(Role.ORACLE), dualWordsChain: chain, isAuctionActive, isBlindBidding, availablePowers, evilTeamCount };
-        } else {
-          context = { mainMode, realProject, imposterProject: includeHints ? imposterProject : '???', location: 'Terms Office', category, distractors: [], includeHints, tabooConstraint: includeTaboo ? TABOO_CONSTRAINTS[Math.floor(Math.random() * TABOO_CONSTRAINTS.length)] : undefined, hasOracleActive: shuffledRoles.includes(Role.ORACLE), isAuctionActive, isBlindBidding, availablePowers, evilTeamCount };
-        }
-      } else {
-        try {
-          const scenarioData = await generateScenarioContext(realProject, location);
-          imposterProject = scenarioData.imposterProject;
-          distractors = scenarioData.distractors;
-        } catch { /* use fallbacks */ }
-        context = { mainMode, realProject, location, category, catchRule, imposterProject: includeHints ? imposterProject : '???', distractors, includeHints, hasOracleActive: shuffledRoles.includes(Role.ORACLE), isAuctionActive, isBlindBidding, availablePowers, evilTeamCount };
+      let context: GameContext = {
+        mainMode, realProject, location, category, catchRule, 
+        imposterProject: includeHints ? imposterProject : '???', 
+        distractors: [], includeHints, 
+        hasOracleActive: shuffledRoles.includes(Role.ORACLE), 
+        isAuctionActive, isBlindBidding, availablePowers, evilTeamCount
+      };
+
+      if (mainMode === MainMode.PAIR) {
+        const pool = [wordA, wordB, "Sugar", "Milk", "Honey"];
+        context.dualWordsChain = Array.from({length: playerCount}).map((_, i) => pool[i % pool.length]);
+        context.realProject = context.dualWordsChain[0];
       }
 
       const finalPlayers: Player[] = shuffledRoles.map((role, i) => {
-        const name = playerNames[i];
         let p1 = '', p2 = undefined;
-        
-        // Project Assignment Logic
         if (mainMode === MainMode.PAIR) {
           const prevIdx = (i - 1 + playerCount) % playerCount;
-          const currentIdx = i;
-          if ([Role.IMPOSTER, Role.MR_WHITE].includes(role)) { p1 = "???"; p2 = "???"; } // Mimic knows real word in Pair? Complex. Let's keep mimic blind in Pair for balance or give chain[0]? 
-          else if (role === Role.MIMIC) { p1 = context.dualWordsChain![prevIdx]; p2 = context.dualWordsChain![currentIdx]; } // Mimic acts like neighbor here
-          else { p1 = context.dualWordsChain![prevIdx]; p2 = context.dualWordsChain![currentIdx]; }
+          if ([Role.IMPOSTER, Role.MR_WHITE].includes(role)) { p1 = "???"; p2 = "???"; }
+          else { p1 = context.dualWordsChain![prevIdx]; p2 = context.dualWordsChain![i]; }
         } else {
-          // Standard/Terms
           if ([Role.NEIGHBOR, Role.ANARCHIST, Role.BOUNTY_HUNTER, Role.MIMIC].includes(role)) p1 = context.realProject;
           else if (role === Role.IMPOSTER) p1 = context.imposterProject;
-          else p1 = '???'; // Mr White
+          else p1 = '???';
         }
-        return { id: `p-${i + 1}`, name, role, assignedProject: p1, assignedProject2: p2, inquestAnswers: [], credits: initialCredits[name] || 10 };
+        return { id: `p-${i + 1}`, name: playerNames[i], role, assignedProject: p1, assignedProject2: p2, inquestAnswers: [], credits: initialCredits[playerNames[i]] || 10 };
       });
 
-      // Oracle Logic
-      const oracleIndex = finalPlayers.findIndex(p => p.role === Role.ORACLE);
-      if (oracleIndex !== -1) {
-        const p1Index = (oracleIndex - 1 + playerCount) % playerCount;
-        const p2Index = (oracleIndex - 2 + playerCount) % playerCount;
-        const p1 = finalPlayers[p1Index];
-        const p2 = finalPlayers[p2Index];
-        
-        const getTeam = (r: Role) => {
-            if ([Role.IMPOSTER, Role.MR_WHITE, Role.MIMIC].includes(r)) return 'EVIL';
-            if (r === Role.ANARCHIST) return 'ROGUE';
-            return 'GOOD';
-        };
-
-        const sameTeam = getTeam(p1.role) === getTeam(p2.role);
-        finalPlayers[oracleIndex].oracleInfo = sameTeam 
+      const oracleIdx = finalPlayers.findIndex(p => p.role === Role.ORACLE);
+      if (oracleIdx !== -1) {
+        const p1 = finalPlayers[(oracleIdx - 1 + playerCount) % playerCount];
+        const p2 = finalPlayers[(oracleIdx - 2 + playerCount) % playerCount];
+        const getTeam = (r: Role) => [Role.IMPOSTER, Role.MR_WHITE, Role.MIMIC].includes(r) ? 'EVIL' : (r === Role.ANARCHIST ? 'ROGUE' : 'GOOD');
+        finalPlayers[oracleIdx].oracleInfo = getTeam(p1.role) === getTeam(p2.role) 
             ? "The two players before you are on the SAME team." 
             : "The two players before you are on DIFFERENT teams.";
       }
 
       context.startingPlayerName = finalPlayers[Math.floor(Math.random() * finalPlayers.length)].name;
-      setGameContext(context);
-      setPlayers(finalPlayers);
-      setCurrentPlayerIndex(0);
+      setGameContext(context); setPlayers(finalPlayers); setCurrentPlayerIndex(0);
       setPhase(isAuctionActive ? 'AUCTION_REVEAL' : 'REVEAL_TRANSITION');
     } catch (error: any) {
-      console.error("Critical Start Error:", error);
-      setNotification({ 
-        message: "Critical Deployment Failure. System link inaccessible.", 
-        type: 'error' 
-      });
+      setIsAiLoading(false);
     } finally {
       setIsAiLoading(false);
     }
   };
 
   const resetGame = () => {
-    setPhase('HOME');
-    setOutcome(null);
-    setPlayers([]);
-    setCurrentPlayerIndex(0);
-    setVirusPoints(0);
-    setIsAiLoading(false);
-    setNotification(null);
+    setPhase('HOME'); setOutcome(null); setPlayers([]); setCurrentPlayerIndex(0); setVirusPoints(0); setIsAiLoading(false); setNotification(null);
   };
 
-  const activeRolesInPlay = players.length > 0 
-    ? Array.from(new Set(players.map(p => p.role)))
-    : [];
-
   return {
-    // State
     phase, setPhase, gameCategory, setGameCategory, playerCount, setPlayerCount,
     playerNames, setPlayerNames, imposterCount, setImposterCount,
     hasMrWhite, setHasMrWhite, hasAnarchist, setHasAnarchist,
-    hasMimic, setHasMimic, hasOracle, setHasOracle, includeHints, setIncludeHints,
-    includeTaboo, setIncludeTaboo, isAuctionActive, setIsAuctionActive,
-    isBlindBidding, setIsBlindBidding, gameMode, setGameMode, groupMode, setGroupMode,
-    mainMode, setMainMode, useAiMissions, setUseAiMissions, isAiLoading,
-    roleDistributionMode, setRoleDistributionMode, customRoleConfig, setCustomRoleConfig,
-    scenarioSets, setScenarioSets, activeSetIds, setActiveSetIds,
-    wordSets, setWordSets, activeWordSetIds, setActiveWordSetIds,
-    inquestSets, setInquestSets, activeInquestSetIds, setActiveInquestSetIds,
-    virusSets, setVirusSets, activeVirusSetIds, setActiveVirusSetIds,
-    players, setPlayers, currentPlayerIndex, setCurrentPlayerIndex,
-    gameContext, outcome, setOutcome, virusPoints, setVirusPoints,
-    lastEliminatedPlayer, setLastEliminatedPlayer,
-    soundEnabled, setSoundEnabled, musicEnabled, setMusicEnabled, musicVolume, setMusicVolume, bgAnimationEnabled, setBgAnimationEnabled,
-    slotMachineEnabled, setSlotMachineEnabled, requireRememberConfirmation, setRequireRememberConfirmation,
-    meetingDuration, setMeetingDuration,
-    lastStandDuration, setLastStandDuration, allTimePoints, gameHistory, playerCredits,
-    notification, setNotification,
-    activeRolesInPlay, // New field for UI
-    // Actions
+    hasMimic, setHasMimic, hasBountyHunter, setHasBountyHunter, hasOracle, setHasOracle, 
+    includeHints, setIncludeHints, includeTaboo, setIncludeTaboo, 
+    isAuctionActive, setIsAuctionActive, isBlindBidding, setIsBlindBidding, 
+    gameMode, setGameMode, groupMode, setGroupMode, mainMode, setMainMode, 
+    useAiMissions, setUseAiMissions, isAiLoading, roleDistributionMode, setRoleDistributionMode, 
+    customRoleConfig, setCustomRoleConfig, scenarioSets, setScenarioSets, 
+    activeSetIds, setActiveSetIds, wordSets, setWordSets, 
+    activeWordSetIds, setActiveWordSetIds, inquestSets, setInquestSets, 
+    activeInquestSetIds, setActiveInquestSetIds, virusSets, setVirusSets, 
+    activeVirusSetIds, setActiveVirusSetIds, players, setPlayers, 
+    currentPlayerIndex, setCurrentPlayerIndex, gameContext, outcome, setOutcome, 
+    virusPoints, setVirusPoints, lastEliminatedPlayer, setLastEliminatedPlayer,
+    soundEnabled, setSoundEnabled, musicEnabled, setMusicEnabled, musicVolume, setMusicVolume, 
+    bgAnimationEnabled, setBgAnimationEnabled, slotMachineEnabled, setSlotMachineEnabled, 
+    requireRememberConfirmation, setRequireRememberConfirmation, meetingDuration, setMeetingDuration,
+    lastStandDuration, setLastStandDuration, allTimePoints, gameHistory, playerCredits, notification, setNotification,
+    activeRolesInPlay: players.length > 0 ? Array.from(new Set(players.map(p => p.role))) : [],
     handleStart, resetGame, awardPoints, clearStats,
     handleDetectionTrigger: () => {
-      if (soundEnabled) soundService.playCaught();
-      const n = virusPoints + 1;
-      setVirusPoints(n);
+      const n = virusPoints + 1; setVirusPoints(n);
       if (n >= 3) {
         setOutcome({ winner: 'VIRUS', reason: 'System Breach! 3 Detection Points reached.' });
-        awardPoints('VIRUS', 'Critical failure');
-        setPhase('RESULTS');
+        awardPoints('VIRUS', 'Critical failure'); setPhase('RESULTS');
       }
     },
     handleVirusGuess: (correct: boolean) => {
