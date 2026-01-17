@@ -34,7 +34,7 @@ const LastStand: React.FC<LastStandProps> = ({ player, allPlayers, realProject, 
 
   const isTextInputMode = mainMode === MainMode.TERMS || mainMode === MainMode.PAIR;
 
-  const oracleCandidates = allPlayers.filter(p => p.id !== player.id);
+  const oracleCandidates = allPlayers?.filter(p => p?.id !== player?.id) || [];
 
   useEffect(() => {
     if (hasGuessed || guessMode === 'SELECT') return;
@@ -56,14 +56,14 @@ const LastStand: React.FC<LastStandProps> = ({ player, allPlayers, realProject, 
   }, [seconds, hasGuessed, onResult, soundEnabled, guessMode]);
 
   const handleProjectGuess = (option: string) => {
-    if (hasGuessed) return;
+    if (hasGuessed || !option?.trim()) return;
     if (soundEnabled) soundService.playClick();
     setHasGuessed(true);
     onResult(option.toLowerCase().trim() === realProject.toLowerCase().trim() ? 'PROJECT_CORRECT' : 'PROJECT_WRONG');
   };
 
   const handleOracleGuess = (target: Player) => {
-    if (hasGuessed) return;
+    if (hasGuessed || !target) return;
     if (soundEnabled) soundService.playClick();
     setHasGuessed(true);
     onResult(target.role === Role.ORACLE ? 'ORACLE_CORRECT' : 'ORACLE_WRONG');

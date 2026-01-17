@@ -52,8 +52,6 @@ interface SetupProps {
   setIncludeHints: (b: boolean) => void;
 }
 
-// Fix: Cast motion to any to avoid property missing errors in JSX in this environment
-const M = motion as any;
 
 const FORBIDDEN_NAMES = ['neighbor', 'imposter', 'mr. white', 'mr white', 'anarchist', 'mimic', 'the mimic', 'oracle', 'the oracle', 'bounty hunter'];
 
@@ -66,6 +64,8 @@ const Setup: React.FC<SetupProps> = (props) => {
   const maxPossibleImposters = Math.floor(props.playerCount / 2);
 
   const toggleSet = (id: string) => {
+    if (!id?.trim()) return;
+    
     if (props.soundEnabled) soundService.playClick();
     if (props.mainMode === MainMode.TERMS || props.mainMode === MainMode.PAIR || props.mainMode === MainMode.VIRUS_PURGE) {
       const next = props.activeWordSetIds.includes(id) ? props.activeWordSetIds.filter(x => x !== id) : [...props.activeWordSetIds, id];
@@ -90,8 +90,10 @@ const Setup: React.FC<SetupProps> = (props) => {
   };
 
   const updateName = (idx: number, newName: string) => {
+    if (idx < 0 || idx >= props.playerNames.length || !newName?.trim()) return;
+    
     const updated = [...props.playerNames];
-    updated[idx] = newName;
+    updated[idx] = newName.trim();
     props.setPlayerNames(updated);
   };
 
@@ -163,7 +165,7 @@ const Setup: React.FC<SetupProps> = (props) => {
               </button>
               <AnimatePresence>
                 {showExtraRoles && (
-                  <M.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden space-y-1 p-2 bg-slate-900/50 rounded-2xl border border-slate-800">
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden space-y-1 p-2 bg-slate-900/50 rounded-2xl border border-slate-800">
                     {[
                       { r: Role.MR_WHITE, state: props.hasMrWhite, toggle: () => props.setHasMrWhite(!props.hasMrWhite), team: 'Imposter' },
                       { r: Role.MIMIC, state: props.hasMimic, toggle: () => props.setHasMimic(!props.hasMimic), team: 'Imposter' },
@@ -179,7 +181,7 @@ const Setup: React.FC<SetupProps> = (props) => {
                          <div className={`w-3.5 h-3.5 rounded-full border-2 ${item.state ? 'bg-indigo-500 border-indigo-300' : 'border-slate-700'}`} />
                       </button>
                     ))}
-                  </M.div>
+                  </motion.div>
                 )}
               </AnimatePresence>
             </div>
@@ -226,7 +228,7 @@ const Setup: React.FC<SetupProps> = (props) => {
       {/* Name Editor Modal */}
       <AnimatePresence>
         {showNameEditor && (
-          <M.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-sm flex flex-col p-6">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-sm flex flex-col p-6">
             <div className="flex justify-between items-center mb-6">
                <h3 className="text-xl font-black text-white uppercase tracking-tighter">Edit Codenames</h3>
                <button onClick={() => setShowNameEditor(false)} className="p-2 bg-slate-800 rounded-full text-slate-400">✕</button>
@@ -246,7 +248,7 @@ const Setup: React.FC<SetupProps> = (props) => {
               ))}
             </div>
             <button onClick={() => setShowNameEditor(false)} className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black uppercase mt-4 shadow-xl">Confirm Roster</button>
-          </M.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

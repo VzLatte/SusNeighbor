@@ -15,8 +15,6 @@ interface RevealCardProps {
   onNext: () => void;
 }
 
-// Fix: Cast motion to any to avoid property missing errors in JSX in this environment
-const M = motion as any;
 
 const SlotMachine: React.FC<{ targetRole: Role, activeRoles: Role[], onFinish: () => void, soundEnabled: boolean }> = ({ targetRole, activeRoles, onFinish, soundEnabled }) => {
   const [displayRole, setDisplayRole] = useState(activeRoles[0] || Role.NEIGHBOR);
@@ -48,9 +46,9 @@ const SlotMachine: React.FC<{ targetRole: Role, activeRoles: Role[], onFinish: (
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-4">
       <div className="relative w-full h-32 flex items-center justify-center overflow-hidden bg-slate-950 rounded-2xl border-2 border-indigo-500/50 shadow-[inset_0_0_20px_rgba(79,70,229,0.3)]">
-        <M.div key={displayRole} initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -50, opacity: 0 }} className={`text-3xl font-black uppercase tracking-tighter ${isDone ? 'text-indigo-400 scale-110 shadow-indigo-500/20' : 'text-slate-600'}`} style={{ textShadow: isDone ? '0 0 15px rgba(129, 140, 248, 0.6)' : 'none' }}>
+        <motion.div key={displayRole} initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -50, opacity: 0 }} className={`text-3xl font-black uppercase tracking-tighter ${isDone ? 'text-indigo-400 scale-110 shadow-indigo-500/20' : 'text-slate-600'}`} style={{ textShadow: isDone ? '0 0 15px rgba(129, 140, 248, 0.6)' : 'none' }}>
           {displayRole}
-        </M.div>
+        </motion.div>
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-white/5 via-transparent to-black/20" />
       </div>
       <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500/50 animate-pulse">
@@ -123,7 +121,7 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
           {isSpinning ? (
             <SlotMachine targetRole={displayedRole} activeRoles={activeRoles} soundEnabled={soundEnabled} onFinish={() => { setIsSpinning(false); setShowContent(true); }} />
           ) : showContent ? (
-            <M.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full flex flex-col">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full flex flex-col">
               <span className={`text-[10px] font-black uppercase tracking-widest mb-1 ${theme.text}`}>Clearance: {displayedRole.toUpperCase()}</span>
               <h3 className="text-3xl font-black mb-2 leading-none text-white">{displayedRole}</h3>
               <div className="space-y-4 flex-1">
@@ -163,19 +161,19 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
                   </div>
                 )}
               </div>
-            </M.div>
+            </motion.div>
           ) : (
             <div className="h-full flex items-center justify-center">
               <p className="text-slate-600 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Encrypted Content</p>
             </div>
           )}
         </div>
-        <M.div drag="y" dragConstraints={{ top: -450, bottom: 0 }} style={{ y: peekY, opacity }} onDragEnd={handleDragEnd} className="absolute inset-0 z-10 bg-slate-800 flex flex-col items-center justify-center p-6 text-center space-y-4 cursor-grab active:cursor-grabbing border-4 border-slate-700 rounded-[2.8rem]" whileTap={{ scale: 0.98 }}>
+        <motion.div drag="y" dragConstraints={{ top: -450, bottom: 0 }} style={{ y: peekY, opacity }} onDragEnd={handleDragEnd} className="absolute inset-0 z-10 bg-slate-800 flex flex-col items-center justify-center p-6 text-center space-y-4 cursor-grab active:cursor-grabbing border-4 border-slate-700 rounded-[2.8rem]" whileTap={{ scale: 0.98 }}>
           <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center">
             <svg className="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
           </div>
           <p className="font-bold text-lg uppercase tracking-widest text-slate-400">Pull Up</p>
-        </M.div>
+        </motion.div>
       </div>
 
       <button 
