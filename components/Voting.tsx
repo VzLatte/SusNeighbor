@@ -6,10 +6,11 @@ import { soundService } from '../services/soundService';
 interface VotingProps {
   players: Player[];
   onSelect: (selected: Player) => void;
+  onNoDecision: () => void;
   soundEnabled: boolean;
 }
 
-const Voting: React.FC<VotingProps> = ({ players, onSelect, soundEnabled }) => {
+const Voting: React.FC<VotingProps> = ({ players, onSelect, onNoDecision, soundEnabled }) => {
   const evilRoles = [Role.IMPOSTER, Role.MR_WHITE];
   const neutralRoles = [Role.MERCENARY];
   const goodRoles = [Role.NEIGHBOR, Role.HUNTER, Role.SEER];
@@ -52,64 +53,6 @@ const Voting: React.FC<VotingProps> = ({ players, onSelect, soundEnabled }) => {
     setVotes(prev => prev.map(v => ({ ...v, isRevealed: true })));
   };
 
-  const determineWinCondition = (selectedPlayers: Player[]): { winner: Player; reason: string } | null => {
-    // Check for Saboteur first (highest priority)
-    const saboteur = selectedPlayers.find(p => p.role === Role.SABOTEUR);
-    if (saboteur) {
-      return {
-        winner: saboteur,
-        reason: `${saboteur.name} was Saboteur! Chaos victory.`
-      };
-    }
-
-    // Check if all selected are evil and we caught the full team
-    const allEvil = selectedPlayers.every(p => evilRoles.includes(p.role));
-    const caughtAllEvil = selectedPlayers.length === targetCount && allEvil;
-    
-    if (caughtAllEvil) {
-      // Neighbors win - pass first evil player to trigger neighbor win logic
-      const evilPlayer = selectedPlayers.find(p => evilRoles.includes(p.role));
-      if (evilPlayer) {
-        return {
-          winner: evilPlayer,
-          reason: `All hostile agents identified! Neighbors win.`
-        };
-      }
-    }
-
-    // Check if any innocent was selected
-    const innocentSelected = selectedPlayers.find(p => !evilRoles.includes(p.role) && !neutralRoles.includes(p.role));
-    if (innocentSelected) {
-      return {
-        winner: innocentSelected,
-        reason: `Eliminated ${innocentSelected.name} (Innocent). Surveillance failure.`
-      };
-    }
-
-    // Check if Mercenary was selected (neutral win)
-    const mercenarySelected = selectedPlayers.find(p => p.role === Role.MERCENARY);
-    if (mercenarySelected) {
-      return {
-        winner: mercenarySelected,
-        reason: `${mercenarySelected.name} (Mercenary) survived to the end! Neutral victory.`
-      };
-    }
-
-    // Partial evil selection (not all evil players caught)
-    if (selectedPlayers.length > 0 && selectedPlayers.length < targetCount) {
-      // Find any innocent player to trigger imposter win
-      const anyInnocent = players.find(p => !evilRoles.includes(p.role) && !neutralRoles.includes(p.role));
-      if (anyInnocent) {
-        return {
-          winner: anyInnocent,
-          reason: `Failed to identify all hostile agents. Security compromised.`
-        };
-      }
-    }
-
-    return null;
-  };
-
   const eliminateMostVoted = () => {
     // Count votes for each target
     const voteCounts: { [key: string]: number } = {};
@@ -120,13 +63,25 @@ const Voting: React.FC<VotingProps> = ({ players, onSelect, soundEnabled }) => {
     // Find the player with the most votes
     let maxVotes = 0;
     let selectedPlayerId = '';
+    let tie = false;
     
     Object.entries(voteCounts).forEach(([playerId, count]) => {
       if (count > maxVotes) {
         maxVotes = count;
         selectedPlayerId = playerId;
+        tie = false;
+      } else if (count === maxVotes) {
+        tie = true;
       }
     });
+
+    const totalVotes = votes.length;
+    const hasMajority = maxVotes > totalVotes / 2;
+
+    if (!selectedPlayerId || tie || !hasMajority) {
+      onNoDecision();
+      return;
+    }
 
     // Find the selected player and call onSelect
     const selectedPlayer = players.find(p => p.id === selectedPlayerId);
@@ -261,6 +216,14 @@ const Voting: React.FC<VotingProps> = ({ players, onSelect, soundEnabled }) => {
           >
             Eliminate Player
           </button>
+          {votes.length === 0 && (
+            <button
+              onClick={onNoDecision}
+              className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-xl border-b-4 border-indigo-900 active:scale-95 transition-all"
+            >
+              No Decision
+            </button>
+          )}
         </div>
       )}
     </div>

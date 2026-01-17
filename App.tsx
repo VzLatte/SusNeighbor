@@ -43,6 +43,32 @@ const NotificationToast: React.FC<{ notification: { message: string, type: 'erro
   );
 };
 
+const MeetingVotingTransition: React.FC<{ onContinue: () => void }> = ({ onContinue }) => (
+  <div className="flex-1 flex flex-col items-center justify-center space-y-10 animate-in fade-in duration-300">
+    <div className="text-center space-y-4">
+      <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Discussion Complete</p>
+      <h2 className="text-4xl font-black text-indigo-400 tracking-tight">Prepare for Voting</h2>
+      <p className="text-slate-400 text-sm font-bold">Secure the device and brief the next operative before revealing votes.</p>
+    </div>
+    <div className="w-full space-y-4">
+      <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-3xl text-left space-y-2">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Protocol</p>
+        <ul className="text-sm text-slate-300 space-y-1 list-disc list-inside">
+          <li>Ensure all agents are ready for the secret ballot.</li>
+          <li>Only the current voter should view the device.</li>
+          <li>No discussing results until all votes are revealed.</li>
+        </ul>
+      </div>
+      <button
+        onClick={onContinue}
+        className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-xl shadow-xl border-b-4 border-indigo-900 active:scale-95 transition-all"
+      >
+        Initiate Secret Vote
+      </button>
+    </div>
+  </div>
+);
+
 const DynamicBackground: React.FC = () => {
   const particles = Array.from({ length: 12 }).map((_, i) => ({ id: i, size: Math.random() * 300 + 200, x: Math.random() * 100, y: Math.random() * 100, duration: Math.random() * 20 + 20, delay: Math.random() * -20 }));
   return (
@@ -61,10 +87,23 @@ const App: React.FC = () => {
   const game = useGameState();
 
   useEffect(() => {
-    if (!game.musicEnabled) { soundService.stopBGM(); return; }
+    if (!game.musicEnabled) {
+      soundService.stopBGM();
+      soundService.stopMeetingTrack();
+      return;
+    }
     if (soundService.getBGMType() === 'SECRET') return;
     const menuPhases = ['HOME', 'SETUP', 'LEADERBOARD', 'SETTINGS', 'HELP', 'REVEAL_TRANSITION', 'REVEAL', 'AUCTION_REVEAL', 'AUCTION_TRANSITION', 'AUCTION_BIDDING', 'STARTING_PLAYER_ANNOUNCEMENT'];
-    if (menuPhases.includes(game.phase)) { soundService.startBGM('MENU'); } else if (game.phase === 'MEETING') { soundService.startBGM('MEETING'); } else { soundService.stopBGM(); }
+    if (menuPhases.includes(game.phase)) {
+      soundService.startBGM('MENU');
+      soundService.stopMeetingTrack();
+    } else if (['MEETING', 'VOTING', 'MEETING_VOTING_TRANSITION'].includes(game.phase)) {
+      soundService.stopBGM();
+      soundService.startMeetingTrack();
+    } else {
+      soundService.stopBGM();
+      soundService.stopMeetingTrack();
+    }
   }, [game.phase, game.musicEnabled]);
 
   const handleLastStandResult = (result: 'PROJECT_CORRECT' | 'PROJECT_WRONG') => {
@@ -131,7 +170,8 @@ const App: React.FC = () => {
     context={game.gameContext} 
     players={game.players}
     duration={game.meetingDuration} 
-    onTimerEnd={() => game.setPhase(game.gameCategory === GameCategory.PVE ? 'VIRUS_GUESS' : 'VOTING')} 
+    timerSettings={game.meetingTimerSettings}
+    onTimerEnd={() => game.setPhase(game.gameCategory === GameCategory.PVE ? 'VIRUS_GUESS' : 'MEETING_VOTING_TRANSITION')} 
     onPlayerComplete={(playerId) => {
       console.log(`Player ${playerId} completed speaking`);
     }}
@@ -140,10 +180,17 @@ const App: React.FC = () => {
     onDetection={game.handleDetectionTrigger} 
   />
 )}
+              {game.phase === 'MEETING_VOTING_TRANSITION' && (
+                <MeetingVotingTransition onContinue={() => game.setPhase('VOTING')} />
+              )}
               {game.phase === 'VOTING' && ( 
                 <Voting 
                   players={game.players} 
                   soundEnabled={game.soundEnabled} 
+                  onNoDecision={() => {
+                    game.setNotification({ message: 'No majority vote reached. Returning to discussion.', type: 'warning' });
+                    game.setPhase('MEETING');
+                  }}
                   onSelect={(selected) => { 
                     game.setLastEliminatedPlayer(selected); 
                     if ([Role.IMPOSTER, Role.MR_WHITE, Role.HUNTER].includes(selected.role)) { 

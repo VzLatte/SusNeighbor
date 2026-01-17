@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { 
   GamePhase, Player, Role, GameMode, MainMode, GroupMode, 
   GameContext, ScenarioSet, WordSet, InquestSet, 
-  HistoryEntry, RoleDistributionMode, CustomRoleConfig, PowerUp, RiskContract, GameCategory, VirusSet 
+  HistoryEntry, RoleDistributionMode, CustomRoleConfig, PowerUp, RiskContract, GameCategory, VirusSet, MeetingTimerSettings 
 } from '../types';
 import { 
   DEFAULT_SET, DEFAULT_WORD_SETS, DEFAULT_INQUEST_SET, VIRUS_WORDS_SET,
@@ -67,7 +67,13 @@ export const useGameState = () => {
   const [bgAnimationEnabled, setBgAnimationEnabled] = useState(true);
   const [slotMachineEnabled, setSlotMachineEnabled] = useState(true);
   const [requireRememberConfirmation, setRequireRememberConfirmation] = useState(true);
+  const defaultMeetingTimers: MeetingTimerSettings = {
+    round1Duration: 90,
+    round2Duration: 60,
+    round3Duration: 45
+  };
   const [meetingDuration, setMeetingDuration] = useState(120);
+  const [meetingTimerSettings, setMeetingTimerSettings] = useState<MeetingTimerSettings>(defaultMeetingTimers);
   const [lastStandDuration, setLastStandDuration] = useState(10);
 
   useEffect(() => {
@@ -82,6 +88,7 @@ export const useGameState = () => {
         setSlotMachineEnabled(parsed.slotMachineEnabled ?? true);
         setRequireRememberConfirmation(parsed.requireRememberConfirmation ?? true);
         setMeetingDuration(parsed.meetingDuration ?? 120);
+        setMeetingTimerSettings(parsed.meetingTimerSettings ?? defaultMeetingTimers);
         setLastStandDuration(parsed.lastStandDuration ?? 10);
       }
     } catch (e) {}
@@ -90,9 +97,9 @@ export const useGameState = () => {
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({
       soundEnabled, musicEnabled, musicVolume, bgAnimationEnabled, slotMachineEnabled, 
-      requireRememberConfirmation, meetingDuration, lastStandDuration
+      requireRememberConfirmation, meetingDuration, lastStandDuration, meetingTimerSettings
     }));
-  }, [soundEnabled, musicEnabled, musicVolume, bgAnimationEnabled, slotMachineEnabled, requireRememberConfirmation, meetingDuration, lastStandDuration]);
+  }, [soundEnabled, musicEnabled, musicVolume, bgAnimationEnabled, slotMachineEnabled, requireRememberConfirmation, meetingDuration, lastStandDuration, meetingTimerSettings]);
 
   useEffect(() => {
     soundService.setBGMVolume(musicVolume);
@@ -378,6 +385,7 @@ export const useGameState = () => {
     soundEnabled, setSoundEnabled, musicEnabled, setMusicEnabled, musicVolume, setMusicVolume, 
     bgAnimationEnabled, setBgAnimationEnabled, slotMachineEnabled, setSlotMachineEnabled, 
     requireRememberConfirmation, setRequireRememberConfirmation, meetingDuration, setMeetingDuration,
+    meetingTimerSettings, setMeetingTimerSettings,
     lastStandDuration, setLastStandDuration, allTimePoints, gameHistory, playerCredits, notification, setNotification,
     activeRolesInPlay: players.length > 0 ? Array.from(new Set(players.map(p => p.role))) : [],
     handleStart, resetGame, awardPoints, clearStats,

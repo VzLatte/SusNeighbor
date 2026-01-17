@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { GameContext, MainMode, Player, Role } from '../types';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { GameContext, MainMode, MeetingTimerSettings, Player, Role } from '../types';
 import { soundService } from '../services/soundService';
 
 interface MeetingProps {
@@ -8,6 +8,7 @@ interface MeetingProps {
   onTimerEnd: () => void;
   onPlayerComplete: (playerId: string) => void;
   duration: number;
+  timerSettings: MeetingTimerSettings;
   soundEnabled: boolean;
   virusPoints?: number;
   onDetection?: () => void;
@@ -18,59 +19,83 @@ const Meeting: React.FC<MeetingProps> = ({
   players, 
   onTimerEnd, 
   onPlayerComplete, 
-  duration, 
+  duration: _duration, 
+  timerSettings,
   soundEnabled, 
   virusPoints = 0, 
   onDetection 
 }) => {
-  const [seconds, setSeconds] = useState(duration);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [completedPlayers, setCompletedPlayers] = useState<Set<string>>(new Set());
   const [isPaused, setIsPaused] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
-  const [roundSeconds, setRoundSeconds] = useState(60);
+  const roundDurations = useMemo(() => ({
+    1: timerSettings?.round1Duration || 90,
+    2: timerSettings?.round2Duration || 60,
+    3: timerSettings?.round3Duration || 45
+  }), [timerSettings]);
+
+  const getRoundDuration = useCallback((round: number) => {
+    return roundDurations[round as keyof typeof roundDurations] || 60;
+  }, [roundDurations]);
+
+  const [roundSeconds, setRoundSeconds] = useState(() => getRoundDuration(1));
 
   const currentPlayer = players[currentPlayerIndex];
   const isVirusMode = context.mainMode === MainMode.VIRUS_PURGE;
 
-  // Round durations (default values)
-  const roundDurations = {
-    1: 90, // Statements
-    2: 60, // Debate
-    3: 45  // Defense
-  };
+  const startingPlayerIndex = useMemo(() => {
+    const startIndex = players.findIndex(p => p.name === context.startingPlayerName);
+    return startIndex !== -1 ? startIndex : 0;
+  }, [players, context.startingPlayerName]);
 
-  const currentRoundDuration = roundDurations[currentRound as keyof typeof roundDurations] || 60;
+  useEffect(() => {
+    setCurrentPlayerIndex(startingPlayerIndex);
+  }, [startingPlayerIndex]);
 
   // Find starting player index
   useEffect(() => {
-    const startIndex = players.findIndex(p => p.name === context.startingPlayerName);
-    if (startIndex !== -1) {
-      setCurrentPlayerIndex(startIndex);
+    setRoundSeconds(prev => {
+      const updated = getRoundDuration(currentRound);
+      return prev === updated ? prev : updated;
+    });
+  }, [getRoundDuration, currentRound]);
+
+  useEffect(() => {
+    setRoundSeconds(prev => {
+      if (prev < 0) return prev;
+      const updated = getRoundDuration(currentRound);
+      return prev === updated ? prev : updated;
+    });
+  }, [timerSettings, getRoundDuration, currentRound]);
+
+  const moveToNextRound = useCallback(() => {
+    if (currentRound < 3) {
+      const nextRound = currentRound + 1;
+      setCompletedPlayers(new Set());
+      setCurrentPlayerIndex(startingPlayerIndex);
+      setCurrentRound(nextRound);
+      setRoundSeconds(getRoundDuration(nextRound));
+    } else {
+      setRoundSeconds(-1);
+      onTimerEnd();
     }
-  }, [players, context.startingPlayerName]);
+  }, [currentRound, startingPlayerIndex, getRoundDuration, onTimerEnd]);
 
   // Round timer logic
   useEffect(() => {
-    if (roundSeconds <= 0) {
-      // Move to next round or end meeting
-      if (currentRound < 3) {
-        setCurrentRound(prev => prev + 1);
-        setRoundSeconds(roundDurations[(currentRound + 1) as keyof typeof roundDurations] || 60);
-        // Reset player completion for new round
-        setCompletedPlayers(new Set());
-      } else {
-        onTimerEnd();
-      }
+    if (isPaused) return;
+    if (roundSeconds < 0) return;
+    if (roundSeconds === 0) {
+      moveToNextRound();
       return;
     }
-    if (isPaused) return;
 
-    if (soundEnabled && roundSeconds <= 10 && roundSeconds > 0) soundService.playTick();
+    if (soundEnabled && roundSeconds <= 10) soundService.playTick();
 
-    const timer = setInterval(() => setRoundSeconds(prev => prev - 1), 1000);
-    return () => clearInterval(timer);
-  }, [roundSeconds, isPaused, currentRound, onTimerEnd, soundEnabled]);
+    const timer = setTimeout(() => setRoundSeconds(prev => Math.max(prev - 1, 0)), 1000);
+    return () => clearTimeout(timer);
+  }, [roundSeconds, isPaused, soundEnabled, moveToNextRound]);
 
   const formatTime = (s: number) => {
     const mins = Math.floor(s / 60);
@@ -109,14 +134,7 @@ const Meeting: React.FC<MeetingProps> = ({
       
       // All players completed in this round
       if (!foundNext) {
-        // Move to next round
-        if (currentRound < 3) {
-          setCurrentRound(prev => prev + 1);
-          setRoundSeconds(roundDurations[(currentRound + 1) as keyof typeof roundDurations] || 60);
-          setCompletedPlayers(new Set());
-        } else {
-          onTimerEnd();
-        }
+        moveToNextRound();
       }
     }
   };
@@ -181,7 +199,7 @@ const Meeting: React.FC<MeetingProps> = ({
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Round Time</span>
               <span className={`text-xl font-black ${roundSeconds < 30 ? 'text-red-500 animate-pulse' : 'text-indigo-400'}`}>
-                {formatTime(roundSeconds)}
+                {formatTime(Math.max(roundSeconds, 0))}
               </span>
             </div>
           </div>
@@ -273,12 +291,6 @@ const Meeting: React.FC<MeetingProps> = ({
                     <div>
                       <span className="text-[10px] font-black uppercase text-slate-500">Secondary:</span>
                       <p className="text-sm font-bold text-slate-100">{currentPlayer.assignedProject2}</p>
-                    </div>
-                  )}
-                  {currentPlayer.oracleInfo && (
-                    <div>
-                      <span className="text-[10px] font-black uppercase text-slate-500">Oracle Vision:</span>
-                      <p className="text-sm font-bold text-teal-400">{currentPlayer.oracleInfo}</p>
                     </div>
                   )}
                 </div>

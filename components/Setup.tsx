@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Role, GameMode, MainMode, GroupMode, ScenarioSet, InquestSet, WordSet, RoleDistributionMode, CustomRoleConfig, GameCategory, VirusSet } from '../types';
+import { Role, GameMode, MainMode, GroupMode, ScenarioSet, InquestSet, WordSet, RoleDistributionMode, CustomRoleConfig, GameCategory, VirusSet, MeetingTimerSettings } from '../types';
 import { MIN_PLAYERS, MAX_PLAYERS } from '../constants';
 import { soundService } from '../services/soundService';
 
@@ -51,8 +51,8 @@ interface SetupProps {
   setIsAuctionActive: (b: boolean) => void;
   playerNames: string[];
   setPlayerNames: (names: string[]) => void;
-  meetingTimerSettings: any;
-  setMeetingTimerSettings: (settings: any) => void;
+  meetingTimerSettings: MeetingTimerSettings;
+  setMeetingTimerSettings: (settings: MeetingTimerSettings) => void;
   includeHints: boolean;
   setIncludeHints: (b: boolean) => void;
 }
@@ -124,8 +124,8 @@ const Setup: React.FC<SetupProps> = (props) => {
                 <button onClick={() => { if (props.playerCount > MIN_PLAYERS) props.setPlayerCount(props.playerCount - 1); }} className="w-12 h-12 rounded-2xl bg-slate-800 border-b-4 border-slate-950 text-white font-black text-2xl flex items-center justify-center active:translate-y-1 transition-all">-</button>
                 <div className="text-center"><span className="text-5xl font-black text-indigo-400 tabular-nums">{props.playerCount}</span></div>
                 <button onClick={() => { if (props.playerCount < MAX_PLAYERS) props.setPlayerCount(props.playerCount + 1); }} className="w-12 h-12 rounded-2xl bg-indigo-600 border-b-4 border-indigo-900 text-white font-black text-2xl flex items-center justify-center active:translate-y-1 transition-all">+</button>
-            </div>
-        </div>
+              </div>
+          </div>
 
         {/* PvP Specific Settings */}
         {props.gameCategory === GameCategory.PVP && (
@@ -228,9 +228,10 @@ const Setup: React.FC<SetupProps> = (props) => {
         </div>
 
         {/* Timer Settings */}
-        <div className="bg-slate-900/50 p-4 rounded-3xl border border-slate-800 mb-6">
-          <h3 className="text-lg font-black text-slate-100 mb-4">Meeting Timer Settings</h3>
-          <div className="space-y-4">
+        {props.gameCategory === GameCategory.PVP && (
+          <div className="bg-slate-900/50 p-4 rounded-3xl border border-slate-800 mb-6">
+            <h3 className="text-lg font-black text-slate-100 mb-4">Meeting Timer Settings</h3>
+            <div className="space-y-4">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-500 mb-2">Round 1 (Statements)</label>
               <div className="grid grid-cols-4 gap-2">
@@ -336,7 +337,7 @@ const Setup: React.FC<SetupProps> = (props) => {
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Game Start Button */}
         <div className="flex justify-center mt-6">

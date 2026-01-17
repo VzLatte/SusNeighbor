@@ -10,6 +10,8 @@ class SoundService {
 
   private menuAudio: HTMLAudioElement | null = null;
   private secretAudio: HTMLAudioElement | null = null;
+  private meetingAudio: HTMLAudioElement | null = null;
+  private meetingAudioPromise: Promise<void> | null = null;
   private activePlayPromise: Promise<void> | null = null;
 
   private isUsingFallback: boolean = false;
@@ -18,6 +20,7 @@ class SoundService {
   // ENSURE THESE LINKS ARE PUBLIC AND ACCURATE
   private readonly MENU_URL = "https://raw.githubusercontent.com/VzLatte/SusNeighbor/refs/heads/main/menu_music.mp3";
   private readonly SECRET_URL = "https://raw.githubusercontent.com/VzLatte/SusNeighbor/refs/heads/main/secret_song.mp3";
+  private readonly MEETING_URL = "https://github.com/VzLatte/SusNeighbor/raw/refs/heads/main/meeting_song.mp3";
 
   private init() {
     if (!this.ctx) {
@@ -38,6 +41,9 @@ class SoundService {
     }
     if (this.secretAudio) {
       this.secretAudio.volume = volume * 0.7;
+    }
+    if (this.meetingAudio) {
+      this.meetingAudio.volume = volume * 0.6;
     }
     // Update active Synth gain nodes
     if (this.currentBGM?.masterGain) {
@@ -96,6 +102,53 @@ class SoundService {
     if (type === 'MEETING') {
        this.startMeetingSynth();
     }
+  }
+
+  async startMeetingTrack() {
+    const context = this.init();
+    if (context.state === 'suspended') await context.resume();
+
+    if (this.meetingAudio) {
+      this.meetingAudio.volume = this.bgmVolume * 0.6;
+      if (this.meetingAudio.paused) {
+        try {
+          this.meetingAudioPromise = this.meetingAudio.play();
+          await this.meetingAudioPromise;
+        } catch (err) {
+          console.warn('Failed to resume meeting track', err);
+        }
+      }
+      return;
+    }
+
+    const audioEl = new Audio(this.MEETING_URL);
+    audioEl.loop = true;
+    audioEl.crossOrigin = 'anonymous';
+    audioEl.volume = this.bgmVolume * 0.6;
+
+    this.meetingAudio = audioEl;
+
+    try {
+      this.meetingAudioPromise = audioEl.play();
+      await this.meetingAudioPromise;
+    } catch (err) {
+      console.warn('Failed to start meeting track', err);
+      this.meetingAudio = null;
+      this.meetingAudioPromise = null;
+    }
+  }
+
+  stopMeetingTrack() {
+    if (!this.meetingAudio) return;
+    try {
+      this.meetingAudio.pause();
+      this.meetingAudio.src = '';
+      this.meetingAudio.load();
+    } catch (err) {
+      console.warn('Failed to stop meeting track', err);
+    }
+    this.meetingAudio = null;
+    this.meetingAudioPromise = null;
   }
 
   private startMeetingSynth() {
