@@ -18,14 +18,14 @@ interface SetupProps {
   soundEnabled: boolean;
   hasMrWhite: boolean;
   setHasMrWhite: (b: boolean) => void;
-  hasMimic: boolean;
-  setHasMimic: (b: boolean) => void;
-  hasBountyHunter: boolean;
-  setHasBountyHunter: (b: boolean) => void;
-  hasOracle: boolean;
-  setHasOracle: (b: boolean) => void;
-  hasAnarchist: boolean;
-  setHasAnarchist: (b: boolean) => void;
+  hasSaboteur: boolean;
+  setHasSaboteur: (b: boolean) => void;
+  hasMercenary: boolean;
+  setHasMercenary: (b: boolean) => void;
+  hasHunter: boolean;
+  setHasHunter: (b: boolean) => void;
+  hasSeer: boolean;
+  setHasSeer: (b: boolean) => void;
   gameMode: GameMode;
   setGameMode: (m: GameMode) => void;
   includeTaboo: boolean;
@@ -39,6 +39,9 @@ interface SetupProps {
   inquestSets: InquestSet[];
   activeInquestSetIds: string[];
   setActiveInquestSetIds: (ids: string[]) => void;
+  virusSets: VirusSet[];
+  activeVirusSetIds: string[];
+  setActiveVirusSetIds: (ids: string[]) => void;
   onStart: () => void;
   imposterCount: number;
   setImposterCount: (n: number) => void;
@@ -48,6 +51,8 @@ interface SetupProps {
   setIsAuctionActive: (b: boolean) => void;
   playerNames: string[];
   setPlayerNames: (names: string[]) => void;
+  meetingTimerSettings: any;
+  setMeetingTimerSettings: (settings: any) => void;
   includeHints: boolean;
   setIncludeHints: (b: boolean) => void;
 }
@@ -168,10 +173,10 @@ const Setup: React.FC<SetupProps> = (props) => {
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden space-y-1 p-2 bg-slate-900/50 rounded-2xl border border-slate-800">
                     {[
                       { r: Role.MR_WHITE, state: props.hasMrWhite, toggle: () => props.setHasMrWhite(!props.hasMrWhite), team: 'Imposter' },
-                      { r: Role.MIMIC, state: props.hasMimic, toggle: () => props.setHasMimic(!props.hasMimic), team: 'Imposter' },
-                      { r: Role.BOUNTY_HUNTER, state: props.hasBountyHunter, toggle: () => props.setHasBountyHunter(!props.hasBountyHunter), team: 'Neighbor' },
-                      { r: Role.ORACLE, state: props.hasOracle, toggle: () => props.setHasOracle(!props.hasOracle), team: 'Neighbor' },
-                      { r: Role.ANARCHIST, state: props.hasAnarchist, toggle: () => props.setHasAnarchist(!props.hasAnarchist), team: 'Rogue' },
+                      { r: Role.SABOTEUR, state: props.hasSaboteur, toggle: () => props.setHasSaboteur(!props.hasSaboteur), team: 'Rogue' },
+                      { r: Role.MERCENARY, state: props.hasMercenary, toggle: () => props.setHasMercenary(!props.hasMercenary), team: 'Neutral' },
+                      { r: Role.HUNTER, state: props.hasHunter, toggle: () => props.setHasHunter(!props.hasHunter), team: 'Neighbor' },
+                      { r: Role.SEER, state: props.hasSeer, toggle: () => props.setHasSeer(!props.hasSeer), team: 'Neighbor' },
                     ].map(item => (
                       <button key={item.r} onClick={item.toggle} className={`w-full p-2.5 rounded-xl border-2 flex justify-between items-center transition-all ${item.state ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800'}`}>
                          <div className="flex flex-col text-left">
@@ -221,9 +226,124 @@ const Setup: React.FC<SetupProps> = (props) => {
               </div>
             )}
         </div>
-      </div>
-      
-      <button onClick={handleExecuteMission} className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-xl shadow-xl border-b-4 border-indigo-900 active:scale-95 transition-all mt-4 relative z-10" > EXECUTE MISSION </button>
+
+        {/* Timer Settings */}
+        <div className="bg-slate-900/50 p-4 rounded-3xl border border-slate-800 mb-6">
+          <h3 className="text-lg font-black text-slate-100 mb-4">Meeting Timer Settings</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-500 mb-2">Round 1 (Statements)</label>
+              <div className="grid grid-cols-4 gap-2">
+                <button 
+                  onClick={() => props.setMeetingTimerSettings({...props.meetingTimerSettings, round1Duration: 60})}
+                  className={`py-2 px-3 rounded-lg font-black text-xs transition-all ${props.meetingTimerSettings?.round1Duration === 60 ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  60s
+                </button>
+                <button 
+                  onClick={() => props.setMeetingTimerSettings({...props.meetingTimerSettings, round1Duration: 90})}
+                  className={`py-2 px-3 rounded-lg font-black text-xs transition-all ${props.meetingTimerSettings?.round1Duration === 90 ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  90s
+                </button>
+                <button 
+                  onClick={() => props.setMeetingTimerSettings({...props.meetingTimerSettings, round1Duration: 120})}
+                  className={`py-2 px-3 rounded-lg font-black text-xs transition-all ${props.meetingTimerSettings?.round1Duration === 120 ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  120s
+                </button>
+                <button 
+                  onClick={() => {
+                    const custom = prompt('Enter custom seconds for Round 1:');
+                    if (custom && !isNaN(Number(custom))) {
+                      props.setMeetingTimerSettings({...props.meetingTimerSettings, round1Duration: Number(custom)});
+                    }
+                  }}
+                  className={`py-2 px-3 rounded-lg font-black text-xs transition-all ${props.meetingTimerSettings?.round1Duration && props.meetingTimerSettings.round1Duration > 120 ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  Custom
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-500 mb-2">Round 2 (Debate)</label>
+              <div className="grid grid-cols-4 gap-2">
+                <button 
+                  onClick={() => props.setMeetingTimerSettings({...props.meetingTimerSettings, round2Duration: 45})}
+                  className={`py-2 px-3 rounded-lg font-black text-xs transition-all ${props.meetingTimerSettings?.round2Duration === 45 ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  45s
+                </button>
+                <button 
+                  onClick={() => props.setMeetingTimerSettings({...props.meetingTimerSettings, round2Duration: 60})}
+                  className={`py-2 px-3 rounded-lg font-black text-xs transition-all ${props.meetingTimerSettings?.round2Duration === 60 ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  60s
+                </button>
+                <button 
+                  onClick={() => props.setMeetingTimerSettings({...props.meetingTimerSettings, round2Duration: 90})}
+                  className={`py-2 px-3 rounded-lg font-black text-xs transition-all ${props.meetingTimerSettings?.round2Duration === 90 ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  90s
+                </button>
+                <button 
+                  onClick={() => {
+                    const custom = prompt('Enter custom seconds for Round 2:');
+                    if (custom && !isNaN(Number(custom))) {
+                      props.setMeetingTimerSettings({...props.meetingTimerSettings, round2Duration: Number(custom)});
+                    }
+                  }}
+                  className={`py-2 px-3 rounded-lg font-black text-xs transition-all ${props.meetingTimerSettings?.round2Duration && props.meetingTimerSettings.round2Duration > 90 ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  Custom
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-500 mb-2">Round 3 (Defense)</label>
+              <div className="grid grid-cols-4 gap-2">
+                <button 
+                  onClick={() => props.setMeetingTimerSettings({...props.meetingTimerSettings, round3Duration: 30})}
+                  className={`py-2 px-3 rounded-lg font-black text-xs transition-all ${props.meetingTimerSettings?.round3Duration === 30 ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  30s
+                </button>
+                <button 
+                  onClick={() => props.setMeetingTimerSettings({...props.meetingTimerSettings, round3Duration: 45})}
+                  className={`py-2 px-3 rounded-lg font-black text-xs transition-all ${props.meetingTimerSettings?.round3Duration === 45 ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  45s
+                </button>
+                <button 
+                  onClick={() => props.setMeetingTimerSettings({...props.meetingTimerSettings, round3Duration: 60})}
+                  className={`py-2 px-3 rounded-lg font-black text-xs transition-all ${props.meetingTimerSettings?.round3Duration === 60 ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  60s
+                </button>
+                <button 
+                  onClick={() => {
+                    const custom = prompt('Enter custom seconds for Round 3:');
+                    if (custom && !isNaN(Number(custom))) {
+                      props.setMeetingTimerSettings({...props.meetingTimerSettings, round3Duration: Number(custom)});
+                    }
+                  }}
+                  className={`py-2 px-3 rounded-lg font-black text-xs transition-all ${props.meetingTimerSettings?.round3Duration && props.meetingTimerSettings.round3Duration > 60 ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  Custom
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Game Start Button */}
+        <div className="flex justify-center mt-6">
+          <button 
+            onClick={handleExecuteMission}
+            className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-xl shadow-xl border-b-4 border-indigo-900 active:scale-95 transition-all mt-4 relative z-10" > EXECUTE MISSION </button>
+        </div>
 
       {/* Name Editor Modal */}
       <AnimatePresence>

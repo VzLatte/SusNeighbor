@@ -3,10 +3,10 @@ export enum Role {
   NEIGHBOR = 'Neighbor',
   IMPOSTER = 'Imposter',
   MR_WHITE = 'Mr. White',
-  ANARCHIST = 'Anarchist',
-  MIMIC = 'The Mimic',
-  BOUNTY_HUNTER = 'Bounty Hunter',
-  ORACLE = 'The Oracle'
+  SABOTEUR = 'Saboteur',
+  MERCENARY = 'Mercenary',
+  HUNTER = 'Hunter',
+  SEER = 'Seer'
 }
 
 export enum GameMode {
@@ -75,17 +75,38 @@ export interface Player {
   assignedProject2?: string; // For Pair mode
   inquestAnswers: string[]; 
   investmentSpend?: InvestmentSpend;
-  oracleInfo?: string; // Changed from targetName to generic info string
+  seerInfo?: string; // Category/clue for Seer
+  alignment?: 'good' | 'evil' | 'neutral'; // For Hunter ability
+  mercenaryTarget?: string; // Player ID Mercenary copied
   credits: number;
   activePower?: PowerUp;
   activeRisk?: RiskContract;
   bidAmount?: number;
+  hasUsedAbility?: boolean; // Track if one-time ability used
+}
+
+export interface MeetingTimerSettings {
+  round1Duration: number; // Statements
+  round2Duration: number; // Debate  
+  round3Duration: number; // Defense
+}
+
+export interface VoteResult {
+  playerId: string;
+  targetId: string;
+  isRevealed: boolean;
+}
+
+export interface SeerLinkResult {
+  type: 'perfect-harmony' | 'the-echo' | 'the-discord';
+  player1Id: string;
+  player2Id: string;
 }
 
 export interface HistoryEntry {
   id: string;
   date: string;
-  winner: 'NEIGHBORS' | 'IMPOSTERS' | 'ANARCHIST' | 'MIMIC' | 'ORACLE' | 'HUMANS' | 'VIRUS';
+  winner: 'NEIGHBORS' | 'IMPOSTERS' | 'SABOTEUR' | 'MERCENARY' | 'HUMANS' | 'VIRUS';
   reason: string;
   mode: MainMode;
   players: { name: string, role: Role }[];

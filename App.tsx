@@ -72,14 +72,13 @@ const App: React.FC = () => {
     if (!player || !game.gameContext) return;
 
     if (result === 'PROJECT_CORRECT') {
-      if (player.role === Role.BOUNTY_HUNTER) {
-         game.setOutcome({ winner: 'NEIGHBORS', reason: `${player.name} (Bounty Hunter) proved their innocence by stating the word! Neighbors Win.` });
-         game.awardPoints('NEIGHBORS', 'Bounty Hunter Redemption');
-      } else {
-         game.setOutcome({ winner: 'IMPOSTERS', reason: `${player.name} guessed the project! Security compromised.` });
-         game.awardPoints('IMPOSTERS', 'Last Stand Victory');
-      }
-    } else if (result === 'ORACLE_CORRECT') {
+      if (player.role === Role.HUNTER) {
+                    game.setOutcome({ winner: 'NEIGHBORS', reason: `${player.name} (Hunter) proved their innocence by stating the word! Neighbors Win.` });
+                    game.awardPoints('NEIGHBORS', 'Hunter Redemption');
+                  } else {
+                    game.setOutcome({ winner: 'IMPOSTERS', reason: `${player.name} guessed the project! Security compromised.` });
+                    game.awardPoints('IMPOSTERS', 'Last Stand Victory');
+                  } else if (result === 'ORACLE_CORRECT') {
       game.setOutcome({ winner: 'IMPOSTERS', reason: `${player.name} identified the Oracle! Network exposed.` });
       game.awardPoints('IMPOSTERS', 'Oracle Assassination');
     } else {
@@ -134,21 +133,34 @@ const App: React.FC = () => {
                     <button onClick={() => game.setPhase('MEETING')} className="w-full py-6 bg-indigo-600 text-white rounded-3xl font-black text-2xl shadow-xl border-b-4 border-indigo-900 active:scale-95 transition-all">OPEN COMMS</button>
                 </div>
               )}
-              {game.phase === 'MEETING' && game.gameContext && <Meeting context={game.gameContext} duration={game.meetingDuration} onTimerEnd={() => game.setPhase(game.gameCategory === GameCategory.PVE ? 'VIRUS_GUESS' : 'VOTING')} soundEnabled={game.soundEnabled} virusPoints={game.virusPoints} onDetection={game.handleDetectionTrigger} />}
+              {game.phase === 'MEETING' && game.gameContext && (
+  <Meeting 
+    context={game.gameContext} 
+    players={game.players}
+    duration={game.meetingDuration} 
+    onTimerEnd={() => game.setPhase(game.gameCategory === GameCategory.PVE ? 'VIRUS_GUESS' : 'VOTING')} 
+    onPlayerComplete={(playerId) => {
+      console.log(`Player ${playerId} completed speaking`);
+    }}
+    soundEnabled={game.soundEnabled} 
+    virusPoints={game.virusPoints} 
+    onDetection={game.handleDetectionTrigger} 
+  />
+)}
               {game.phase === 'VOTING' && ( 
                 <Voting 
                   players={game.players} 
                   soundEnabled={game.soundEnabled} 
                   onSelect={(selected) => { 
                     game.setLastEliminatedPlayer(selected); 
-                    if (selected.role === Role.ANARCHIST) { 
+                    if (selected.role === Role.BOUNTY_HUNTER) { 
                       game.setOutcome({ winner: 'ANARCHIST', reason: `${selected.name} was the Anarchist! Rogue victory.` }); 
                       game.awardPoints('ANARCHIST', 'Anarchist win'); 
                       game.setPhase('RESULTS'); 
-                    } else if ([Role.IMPOSTER, Role.MR_WHITE, Role.BOUNTY_HUNTER].includes(selected.role)) { 
+                    } else if ([Role.IMPOSTER, Role.MR_WHITE, Role.HUNTER].includes(selected.role)) { 
                       // These roles trigger Last Stand
                       game.setPhase('LAST_STAND');
-                    } else if (selected.role === Role.MIMIC) {
+                    } else if (selected.role === Role.MERCENARY) {
                       game.setOutcome({ winner: 'NEIGHBORS', reason: `The Mimic (${selected.name}) was caught! Neighbors win.` }); 
                       game.awardPoints('NEIGHBORS', 'Mimic Caught'); 
                       game.setPhase('RESULTS'); 
