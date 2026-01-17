@@ -95,10 +95,11 @@ const Setup: React.FC<SetupProps> = (props) => {
   };
 
   const updateName = (idx: number, newName: string) => {
-    if (idx < 0 || idx >= props.playerNames.length || !newName?.trim()) return;
-    
+    // Ensure playerNames array is large enough
     const updated = [...props.playerNames];
-    updated[idx] = newName.trim();
+    while (updated.length <= idx) updated.push("");
+    
+    updated[idx] = newName;
     props.setPlayerNames(updated);
   };
 
@@ -125,7 +126,7 @@ const Setup: React.FC<SetupProps> = (props) => {
                 <div className="text-center"><span className="text-5xl font-black text-indigo-400 tabular-nums">{props.playerCount}</span></div>
                 <button onClick={() => { if (props.playerCount < MAX_PLAYERS) props.setPlayerCount(props.playerCount + 1); }} className="w-12 h-12 rounded-2xl bg-indigo-600 border-b-4 border-indigo-900 text-white font-black text-2xl flex items-center justify-center active:translate-y-1 transition-all">+</button>
               </div>
-          </div>
+        </div>
 
         {/* PvP Specific Settings */}
         {props.gameCategory === GameCategory.PVP && (
@@ -336,6 +337,7 @@ const Setup: React.FC<SetupProps> = (props) => {
                 </button>
               </div>
             </div>
+            </div>
           </div>
         )}
 
@@ -346,30 +348,40 @@ const Setup: React.FC<SetupProps> = (props) => {
             className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-xl shadow-xl border-b-4 border-indigo-900 active:scale-95 transition-all mt-4 relative z-10" > EXECUTE MISSION </button>
         </div>
       </div>
-      {/* Name Editor Modal */}
+      
+      {/* Name Editor Overlay */}
       <AnimatePresence>
         {showNameEditor && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-sm flex flex-col p-6">
-            <div className="flex justify-between items-center mb-6">
-               <h3 className="text-xl font-black text-white uppercase tracking-tighter">Edit Codenames</h3>
-               <button onClick={() => setShowNameEditor(false)} className="p-2 bg-slate-800 rounded-full text-slate-400">✕</button>
-            </div>
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
-              {Array.from({length: props.playerCount}).map((_, i) => (
-                <div key={i} className="flex gap-2">
-                   <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center font-black text-slate-500 shrink-0">#{i + 1}</div>
-                   <input 
-                      type="text" 
-                      value={props.playerNames[i]}
-                      onChange={(e) => updateName(i, e.target.value)}
-                      className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 font-bold text-white focus:border-indigo-500 outline-none"
-                      placeholder={`Agent ${i + 1}`}
-                   />
+            <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-50 bg-slate-950/95 flex flex-col items-center justify-center p-6 backdrop-blur-sm"
+            >
+                <div className="w-full max-w-sm flex flex-col h-full max-h-[80%]">
+                    <div className="flex justify-between items-center mb-6 shrink-0">
+                        <h3 className="text-xl font-black text-white uppercase tracking-wider">Manage Codenames</h3>
+                        <button onClick={() => setShowNameEditor(false)} className="text-slate-500 hover:text-white transition-colors">
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <div className="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-2">
+                        {Array.from({length: props.playerCount}).map((_, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                                <span className="text-slate-500 font-black w-8 text-right text-xs">{i+1}</span>
+                                <input 
+                                    type="text" 
+                                    value={props.playerNames[i] || ""}
+                                    onChange={(e) => updateName(i, e.target.value)}
+                                    placeholder={`Agent ${i+1}`}
+                                    className="flex-1 bg-slate-900 border-2 border-slate-800 rounded-xl px-4 py-3 text-white font-bold text-sm focus:border-indigo-500 focus:bg-slate-800 outline-none transition-all placeholder:text-slate-600"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                    <button onClick={() => setShowNameEditor(false)} className="mt-6 w-full py-4 bg-indigo-600 text-white font-black rounded-xl uppercase shrink-0 border-b-4 border-indigo-800 active:translate-y-1 active:border-b-0 transition-all">Save Changes</button>
                 </div>
-              ))}
-            </div>
-            <button onClick={() => setShowNameEditor(false)} className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black uppercase mt-4 shadow-xl">Confirm Roster</button>
-          </motion.div>
+            </motion.div>
         )}
       </AnimatePresence>
     </div>
