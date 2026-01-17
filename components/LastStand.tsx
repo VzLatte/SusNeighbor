@@ -18,8 +18,10 @@ interface LastStandProps {
 const LastStand: React.FC<LastStandProps> = ({ player, allPlayers, realProject, distractors, mainMode, onResult, duration, soundEnabled, hasOracleInPlay }) => {
   const isImposter = player.role === Role.IMPOSTER;
   const isMrWhite = player.role === Role.MR_WHITE;
+  const isBountyHunter = player.role === Role.BOUNTY_HUNTER;
   
-  const initialMode = (isImposter) ? 'ORACLE' : (hasOracleInPlay ? 'SELECT' : 'PROJECT');
+  // Bounty Hunter defaults to PROJECT mode to prove innocence (or redemption)
+  const initialMode = (isImposter) ? 'ORACLE' : (hasOracleInPlay && !isBountyHunter ? 'SELECT' : 'PROJECT');
   
   const [guessMode, setGuessMode] = useState<'PROJECT' | 'ORACLE' | 'SELECT'>(initialMode);
   const [hasGuessed, setHasGuessed] = useState(false);
@@ -67,13 +69,19 @@ const LastStand: React.FC<LastStandProps> = ({ player, allPlayers, realProject, 
     onResult(target.role === Role.ORACLE ? 'ORACLE_CORRECT' : 'ORACLE_WRONG');
   };
 
+  const getFlavorText = () => {
+    if (isBountyHunter) return "Prove your identity to save the mission.";
+    if (isImposter) return "Locate the Oracle to salvage the operation.";
+    return "Identify the target Asset to compromise the mission.";
+  };
+
   return (
     <div className="flex-1 flex flex-col space-y-6 animate-in scale-in duration-500">
       <div className="text-center space-y-2">
         <div className="inline-block px-3 py-1 bg-red-500 text-white text-[10px] font-black uppercase rounded-full mb-2 tracking-widest">Caught!</div>
         <h2 className="text-3xl font-black text-slate-100">{player.role}'s Last Stand</h2>
         <p className="text-slate-400 text-sm">
-          {isImposter ? 'Locate the Oracle to salvage the operation.' : 'Identify the target Asset to compromise the mission.'}
+          {getFlavorText()}
         </p>
       </div>
 

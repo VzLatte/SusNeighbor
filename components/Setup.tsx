@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Role, GameMode, MainMode, GroupMode, ScenarioSet, InquestSet, WordSet, RoleDistributionMode, CustomRoleConfig, GameCategory, VirusSet } from '../types';
 import { MIN_PLAYERS, MAX_PLAYERS } from '../constants';
 import { soundService } from '../services/soundService';
 
-// Fix: Add missing SetupProps interface definition
 interface SetupProps {
   playerCount: number;
   setPlayerCount: (n: number) => void;
@@ -42,6 +40,16 @@ interface SetupProps {
   activeInquestSetIds: string[];
   setActiveInquestSetIds: (ids: string[]) => void;
   onStart: () => void;
+  imposterCount: number;
+  setImposterCount: (n: number) => void;
+  useAiMissions: boolean;
+  setUseAiMissions: (b: boolean) => void;
+  isAuctionActive: boolean;
+  setIsAuctionActive: (b: boolean) => void;
+  playerNames: string[];
+  setPlayerNames: (names: string[]) => void;
+  includeHints: boolean;
+  setIncludeHints: (b: boolean) => void;
 }
 
 // Fix: Cast motion to any to avoid property missing errors in JSX in this environment
@@ -54,19 +62,8 @@ const Setup: React.FC<SetupProps> = (props) => {
   const [showNameEditor, setShowNameEditor] = useState(false);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [tempName, setTempName] = useState("");
-  const [nameErrors, setNameErrors] = useState<Record<number, string>>({});
 
   const maxPossibleImposters = Math.floor(props.playerCount / 2);
-
-  const handleCustomAdjust = (field: keyof CustomRoleConfig, delta: number) => {
-    if (props.soundEnabled) soundService.playClick();
-    const current = props.customRoleConfig;
-    let newValue = (current[field] as number) + delta;
-    if (field === 'imposterCount') newValue = Math.max(1, Math.min(newValue, maxPossibleImposters));
-    if (field === 'specialCount') newValue = Math.max(0, Math.min(newValue, props.playerCount - current.imposterCount - 1));
-    const newNeighbor = props.playerCount - (field === 'imposterCount' ? newValue : current.imposterCount) - (field === 'specialCount' ? newValue : current.specialCount);
-    props.setCustomRoleConfig({ ...current, [field]: newValue, neighborCount: Math.max(0, newNeighbor) });
-  };
 
   const toggleSet = (id: string) => {
     if (props.soundEnabled) soundService.playClick();
@@ -88,40 +85,53 @@ const Setup: React.FC<SetupProps> = (props) => {
     else props.setActiveInquestSetIds(props.inquestSets.map(s => s.id));
   };
 
-  const validateName = (name: string): string => {
-    const trimmed = name.trim();
-    if (trimmed === "") return "Please input a proper name";
-    if (trimmed.length > 14) return "Too long (max 14)";
-    if (FORBIDDEN_NAMES.includes(trimmed.toLowerCase())) return "Identifier reserved";
-    return "";
-  };
-
   const handleExecuteMission = () => {
     props.onStart();
+  };
+
+  const updateName = (idx: number, newName: string) => {
+    const updated = [...props.playerNames];
+    updated[idx] = newName;
+    props.setPlayerNames(updated);
   };
 
   const currentSets = (props.mainMode === MainMode.TERMS || props.mainMode === MainMode.PAIR || props.mainMode === MainMode.VIRUS_PURGE) ? props.wordSets : (props.mainMode === MainMode.SCHEME || props.mainMode === MainMode.INVESTMENT ? props.scenarioSets : props.inquestSets);
   const currentActiveIds = (props.mainMode === MainMode.TERMS || props.mainMode === MainMode.PAIR || props.mainMode === MainMode.VIRUS_PURGE) ? props.activeWordSetIds : (props.mainMode === MainMode.SCHEME || props.mainMode === MainMode.INVESTMENT ? props.activeSetIds : props.activeInquestSetIds);
 
   return (
-    <div className="flex-1 flex flex-col space-y-6 animate-in fade-in duration-500 pb-8">
+    <div className="flex-1 flex flex-col space-y-6 animate-in fade-in duration-500 pb-8 relative">
       <div className="text-center shrink-0">
         <h2 className="text-3xl font-black text-indigo-400 uppercase tracking-tighter">Mission Briefing</h2>
         <p className="text-slate-400 text-[10px] uppercase tracking-widest font-bold">{props.gameCategory}</p>
       </div>
 
-      <div className="space-y-5 overflow-y-auto pr-1 custom-scrollbar pb-6 flex-1">
-        <div className="space-y-3 bg-slate-900/50 p-6 rounded-3xl border border-slate-800 text-center">
-            <label className="text-[11px] font-black uppercase text-slate-500 tracking-wider">Active Operatives</label>
-            <div className="flex items-center justify-center gap-6">
+      <div className="space-y-5 overflow-y-auto pr-1 custom-scrollbar flex-1 pb-6">
+        
+        {/* Player Count & Names */}
+        <div className="space-y-3 bg-slate-900/50 p-6 rounded-3xl border border-slate-800 text-center relative overflow-hidden">
+            <div className="flex justify-between items-center mb-2">
+               <label className="text-[11px] font-black uppercase text-slate-500 tracking-wider">Active Operatives</label>
+               <button onClick={() => setShowNameEditor(true)} className="text-[9px] font-black uppercase text-indigo-400 tracking-wider hover:text-indigo-300">Edit Codenames</button>
+            </div>
+            <div className="flex items-center justify-center gap-6 relative z-10">
                 <button onClick={() => { if (props.playerCount > MIN_PLAYERS) props.setPlayerCount(props.playerCount - 1); }} className="w-12 h-12 rounded-2xl bg-slate-800 border-b-4 border-slate-950 text-white font-black text-2xl flex items-center justify-center active:translate-y-1 transition-all">-</button>
                 <div className="text-center"><span className="text-5xl font-black text-indigo-400 tabular-nums">{props.playerCount}</span></div>
                 <button onClick={() => { if (props.playerCount < MAX_PLAYERS) props.setPlayerCount(props.playerCount + 1); }} className="w-12 h-12 rounded-2xl bg-indigo-600 border-b-4 border-indigo-900 text-white font-black text-2xl flex items-center justify-center active:translate-y-1 transition-all">+</button>
             </div>
         </div>
 
+        {/* PvP Specific Settings */}
         {props.gameCategory === GameCategory.PVP && (
           <>
+            <div className="bg-slate-900/50 p-4 rounded-3xl border border-slate-800 flex items-center justify-between">
+               <label className="text-[11px] font-black uppercase text-pink-500 tracking-wider">Imposters</label>
+               <div className="flex items-center gap-4">
+                  <button onClick={() => props.setImposterCount(Math.max(1, props.imposterCount - 1))} className="w-8 h-8 rounded-xl bg-slate-800 text-pink-500 font-black flex items-center justify-center border border-slate-700">-</button>
+                  <span className="text-xl font-black text-white w-4 text-center">{props.imposterCount}</span>
+                  <button onClick={() => props.setImposterCount(Math.min(maxPossibleImposters, props.imposterCount + 1))} className="w-8 h-8 rounded-xl bg-pink-600 text-white font-black flex items-center justify-center border-b-2 border-pink-900 shadow-lg shadow-pink-500/20">+</button>
+               </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-500 px-1">Class</label>
@@ -153,7 +163,6 @@ const Setup: React.FC<SetupProps> = (props) => {
               </button>
               <AnimatePresence>
                 {showExtraRoles && (
-                  // Fix: Using M.div instead of motion.div to bypass environment-specific type errors
                   <M.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden space-y-1 p-2 bg-slate-900/50 rounded-2xl border border-slate-800">
                     {[
                       { r: Role.MR_WHITE, state: props.hasMrWhite, toggle: () => props.setHasMrWhite(!props.hasMrWhite), team: 'Imposter' },
@@ -178,26 +187,68 @@ const Setup: React.FC<SetupProps> = (props) => {
             <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase text-slate-500 px-1">Game Protocol</label>
                 <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => props.setGameMode(props.gameMode === GameMode.MYSTERIOUS ? GameMode.NORMAL : GameMode.MYSTERIOUS)} className={`p-4 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${props.gameMode === GameMode.MYSTERIOUS ? 'border-indigo-500 bg-indigo-600 text-white shadow-lg' : 'border-slate-800 bg-slate-900 text-slate-500'}`}>Mysterious</button>
-                    <button onClick={() => props.setIncludeTaboo(!props.includeTaboo)} className={`p-4 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${props.includeTaboo ? 'border-purple-500 bg-purple-600 text-white shadow-lg' : 'border-slate-800 bg-slate-900 text-slate-500'}`}>Taboo Mode</button>
+                    <button onClick={() => props.setGameMode(props.gameMode === GameMode.MYSTERIOUS ? GameMode.NORMAL : GameMode.MYSTERIOUS)} className={`p-3 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${props.gameMode === GameMode.MYSTERIOUS ? 'border-indigo-500 bg-indigo-600 text-white shadow-lg' : 'border-slate-800 bg-slate-900 text-slate-500'}`}>Mysterious</button>
+                    <button onClick={() => props.setIncludeTaboo(!props.includeTaboo)} className={`p-3 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${props.includeTaboo ? 'border-purple-500 bg-purple-600 text-white shadow-lg' : 'border-slate-800 bg-slate-900 text-slate-500'}`}>Taboo Mode</button>
+                    <button onClick={() => props.setIsAuctionActive(!props.isAuctionActive)} className={`p-3 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${props.isAuctionActive ? 'border-yellow-500 bg-yellow-600 text-white shadow-lg' : 'border-slate-800 bg-slate-900 text-slate-500'}`}>Auction</button>
+                    <button onClick={() => props.setIncludeHints(!props.includeHints)} className={`p-3 rounded-xl border-2 text-[10px] font-black uppercase transition-all ${props.includeHints ? 'border-cyan-500 bg-cyan-600 text-white shadow-lg' : 'border-slate-800 bg-slate-900 text-slate-500'}`}>{props.includeHints ? 'Imposter Hints: ON' : 'Imposter Hints: OFF'}</button>
                 </div>
             </div>
           </>
         )}
 
+        {/* Mission Content Selection */}
         <div className="space-y-3">
             <div className="flex justify-between items-center px-1">
               <label className="text-[10px] font-black uppercase text-slate-500">Mission Content</label>
-              <button onClick={selectAllSets} className="text-[9px] font-black text-indigo-500 uppercase">All</button>
+              {!props.useAiMissions && <button onClick={selectAllSets} className="text-[9px] font-black text-indigo-500 uppercase">All</button>}
             </div>
-            <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
-                {currentSets.map(set => (
-                <button key={set.id} onClick={() => toggleSet(set.id)} className={`px-3 py-2 rounded-xl text-[10px] font-bold text-left border ${currentActiveIds.includes(set.id) ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`} > {set.name} </button>
-                ))}
-            </div>
+            
+            <button 
+              onClick={() => props.setUseAiMissions(!props.useAiMissions)} 
+              className={`w-full p-4 mb-2 rounded-xl border-2 text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 ${props.useAiMissions ? 'border-indigo-400 bg-indigo-500/20 text-indigo-300 shadow-[0_0_15px_rgba(129,140,248,0.2)]' : 'border-slate-800 bg-slate-900 text-slate-500'}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              {props.useAiMissions ? 'AI GENERATED MISSIONS ACTIVE' : 'ENABLE AI GENERATED MISSIONS'}
+            </button>
+
+            {!props.useAiMissions && (
+              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto pr-1 custom-scrollbar animate-in fade-in duration-300">
+                  {currentSets.map(set => (
+                  <button key={set.id} onClick={() => toggleSet(set.id)} className={`px-3 py-2 rounded-xl text-[10px] font-bold text-left border ${currentActiveIds.includes(set.id) ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`} > {set.name} </button>
+                  ))}
+              </div>
+            )}
         </div>
       </div>
-      <button onClick={handleExecuteMission} className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-xl shadow-xl border-b-4 border-indigo-900 active:scale-95 transition-all mt-4" > EXECUTE MISSION </button>
+      
+      <button onClick={handleExecuteMission} className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-xl shadow-xl border-b-4 border-indigo-900 active:scale-95 transition-all mt-4 relative z-10" > EXECUTE MISSION </button>
+
+      {/* Name Editor Modal */}
+      <AnimatePresence>
+        {showNameEditor && (
+          <M.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-sm flex flex-col p-6">
+            <div className="flex justify-between items-center mb-6">
+               <h3 className="text-xl font-black text-white uppercase tracking-tighter">Edit Codenames</h3>
+               <button onClick={() => setShowNameEditor(false)} className="p-2 bg-slate-800 rounded-full text-slate-400">✕</button>
+            </div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
+              {Array.from({length: props.playerCount}).map((_, i) => (
+                <div key={i} className="flex gap-2">
+                   <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center font-black text-slate-500 shrink-0">#{i + 1}</div>
+                   <input 
+                      type="text" 
+                      value={props.playerNames[i]}
+                      onChange={(e) => updateName(i, e.target.value)}
+                      className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 font-bold text-white focus:border-indigo-500 outline-none"
+                      placeholder={`Agent ${i + 1}`}
+                   />
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setShowNameEditor(false)} className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black uppercase mt-4 shadow-xl">Confirm Roster</button>
+          </M.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

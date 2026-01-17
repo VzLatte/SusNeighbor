@@ -1,10 +1,9 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import { Player, Role, GameContext, GameMode, MainMode } from '../types';
 import { soundService } from '../services/soundService';
 
-// Fix: Add missing RevealCardProps interface definition
 interface RevealCardProps {
   player: Player;
   gameMode: GameMode;
@@ -65,7 +64,7 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
   const [hasRevealed, setHasRevealed] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
   const [showContent, setShowContent] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [countdown, setCountdown] = useState(4); // 4 second mandatory read time
   
   const y = useMotionValue(0);
   const peekY = useTransform(y, [0, -400], [0, -400], { clamp: true });
@@ -78,6 +77,15 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
       if (slotMachineEnabled) { setIsSpinning(true); } else { setShowContent(true); }
     }
   };
+
+  useEffect(() => {
+    if (showContent && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [showContent, countdown]);
 
   const isActuallyNeighbor = (gameMode === GameMode.MYSTERIOUS && player.role === Role.IMPOSTER);
   const displayedRole = isActuallyNeighbor ? Role.NEIGHBOR : player.role;
@@ -99,13 +107,8 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
   const showCategory = mainMode === MainMode.TERMS || mainMode === MainMode.PAIR || mainMode === MainMode.VIRUS_PURGE;
 
   const handleBriefingRead = () => {
-    const settings = localStorage.getItem('imposter_settings');
-    const requireConfirm = settings ? JSON.parse(settings).requireRememberConfirmation : true;
-    if (requireConfirm) {
-      setShowConfirmation(true);
-    } else {
-      onNext();
-    }
+    if (soundEnabled) soundService.playLockIn();
+    onNext();
   };
 
   return (
@@ -175,30 +178,19 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
         </M.div>
       </div>
 
-      <button disabled={!showContent} onClick={handleBriefingRead} className={`w-full py-5 rounded-3xl font-black text-xl transition-all ${ showContent ? 'bg-indigo-600 text-white shadow-xl active:scale-95 border-b-4 border-indigo-900' : 'bg-slate-800 text-slate-600'}`}>
-        {showContent ? 'BRIEFING READ' : isSpinning ? 'DECRYPTING...' : 'SWIPE TO REVEAL'}
+      <button 
+        disabled={!showContent || countdown > 0} 
+        onClick={handleBriefingRead} 
+        className={`w-full py-5 rounded-3xl font-black text-xl transition-all ${ 
+          (!showContent || countdown > 0)
+            ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
+            : 'bg-indigo-600 text-white shadow-xl active:scale-95 border-b-4 border-indigo-900'
+        }`}
+      >
+        {showContent 
+            ? (countdown > 0 ? `MEMORIZE INTEL (${countdown})` : 'BRIEFING READ') 
+            : (isSpinning ? 'DECRYPTING...' : 'SWIPE TO REVEAL')}
       </button>
-
-      {/* Confirmation Modal */}
-      <AnimatePresence>
-        {showConfirmation && (
-          <M.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-8">
-            <M.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900 border-2 border-indigo-500/30 rounded-[2.5rem] p-8 w-full max-w-sm text-center shadow-2xl space-y-8">
-              <div className="space-y-2">
-                <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Memorization Lock</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Once you proceed, the phone must be passed. Have you internalized your secret word and mission objectives?</p>
-              </div>
-              <button 
-                onClick={() => { if (soundEnabled) soundService.playLockIn(); onNext(); }} 
-                className="w-full py-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-xl shadow-xl shadow-indigo-500/20 active:scale-95 border-b-4 border-indigo-900 transition-all"
-              >
-                I HAVE MEMORIZED MY WORD
-              </button>
-              <button onClick={() => setShowConfirmation(false)} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-300">Wait, show briefing again</button>
-            </M.div>
-          </M.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

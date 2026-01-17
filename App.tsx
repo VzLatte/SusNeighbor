@@ -72,6 +72,33 @@ const App: React.FC = () => {
     if (menuPhases.includes(game.phase)) { soundService.startBGM('MENU'); } else if (game.phase === 'MEETING') { soundService.startBGM('MEETING'); } else { soundService.stopBGM(); }
   }, [game.phase, game.musicEnabled]);
 
+  const handleLastStandResult = (result: 'PROJECT_CORRECT' | 'PROJECT_WRONG' | 'ORACLE_CORRECT' | 'ORACLE_WRONG') => {
+    const player = game.lastEliminatedPlayer;
+    if (!player) return;
+
+    if (result === 'PROJECT_CORRECT') {
+      if (player.role === Role.BOUNTY_HUNTER) {
+         game.setOutcome({ winner: 'NEIGHBORS', reason: `${player.name} (Bounty Hunter) proved their innocence by stating the word! Neighbors Win.` });
+         game.awardPoints('NEIGHBORS', 'Bounty Hunter Redemption');
+      } else {
+         game.setOutcome({ winner: 'IMPOSTERS', reason: `${player.name} guessed the project! Security compromised.` });
+         game.awardPoints('IMPOSTERS', 'Last Stand Victory');
+      }
+    } else if (result === 'ORACLE_CORRECT') {
+      game.setOutcome({ winner: 'IMPOSTERS', reason: `${player.name} identified the Oracle! Network exposed.` });
+      game.awardPoints('IMPOSTERS', 'Oracle Assassination');
+    } else {
+      if (player.role === Role.BOUNTY_HUNTER) {
+         game.setOutcome({ winner: 'IMPOSTERS', reason: `Neighbors voted out ${player.name} (Bounty Hunter) and they failed to prove identity.` });
+         game.awardPoints('IMPOSTERS', 'Civilian Eliminated');
+      } else {
+         game.setOutcome({ winner: 'NEIGHBORS', reason: `${player.name} failed to intercept intel. Neighbors Secure.` });
+         game.awardPoints('NEIGHBORS', 'Threat Eliminated');
+      }
+    }
+    game.setPhase('RESULTS');
+  };
+
   return (
     <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-indigo-500/30 overflow-hidden relative">
       {game.bgAnimationEnabled ? <DynamicBackground /> : <div className="fixed inset-0 z-0 bg-[#020617]" />}
@@ -113,7 +140,44 @@ const App: React.FC = () => {
                 </div>
               )}
               {game.phase === 'MEETING' && <Meeting context={game.gameContext!} duration={game.meetingDuration} onTimerEnd={() => game.setPhase(game.gameCategory === GameCategory.PVE ? 'VIRUS_GUESS' : 'VOTING')} soundEnabled={game.soundEnabled} virusPoints={game.virusPoints} onDetection={game.handleDetectionTrigger} />}
-              {game.phase === 'VOTING' && ( <Voting players={game.players} soundEnabled={game.soundEnabled} onSelect={(selected) => { game.setLastEliminatedPlayer(selected); if (selected.role === Role.ANARCHIST) { game.setOutcome({ winner: 'ANARCHIST', reason: `${selected.name} was the Anarchist! Rogue victory.` }); game.awardPoints('ANARCHIST', 'Anarchist win'); game.setPhase('RESULTS'); } else if ([Role.IMPOSTER, Role.MR_WHITE, Role.MIMIC].includes(selected.role)) { game.setOutcome({ winner: 'NEIGHBORS', reason: `Hostile agents neutralized. Neighbors secure the area.` }); game.awardPoints('NEIGHBORS', 'Threat removed'); game.setPhase('RESULTS'); } else { game.setOutcome({ winner: 'IMPOSTERS', reason: `Eliminated ${selected.name}. Surveillance failure.` }); game.awardPoints('IMPOSTERS', 'Innocent out'); game.setPhase('RESULTS'); } }} /> )}
+              {game.phase === 'VOTING' && ( 
+                <Voting 
+                  players={game.players} 
+                  soundEnabled={game.soundEnabled} 
+                  onSelect={(selected) => { 
+                    game.setLastEliminatedPlayer(selected); 
+                    if (selected.role === Role.ANARCHIST) { 
+                      game.setOutcome({ winner: 'ANARCHIST', reason: `${selected.name} was the Anarchist! Rogue victory.` }); 
+                      game.awardPoints('ANARCHIST', 'Anarchist win'); 
+                      game.setPhase('RESULTS'); 
+                    } else if ([Role.IMPOSTER, Role.MR_WHITE, Role.BOUNTY_HUNTER].includes(selected.role)) { 
+                      // These roles trigger Last Stand
+                      game.setPhase('LAST_STAND');
+                    } else if (selected.role === Role.MIMIC) {
+                      game.setOutcome({ winner: 'NEIGHBORS', reason: `The Mimic (${selected.name}) was caught! Neighbors win.` }); 
+                      game.awardPoints('NEIGHBORS', 'Mimic Caught'); 
+                      game.setPhase('RESULTS'); 
+                    } else { 
+                      game.setOutcome({ winner: 'IMPOSTERS', reason: `Eliminated ${selected.name} (Innocent). Surveillance failure.` }); 
+                      game.awardPoints('IMPOSTERS', 'Innocent out'); 
+                      game.setPhase('RESULTS'); 
+                    } 
+                  }} 
+                /> 
+              )}
+              {game.phase === 'LAST_STAND' && game.lastEliminatedPlayer && (
+                 <LastStand 
+                    player={game.lastEliminatedPlayer}
+                    allPlayers={game.players}
+                    realProject={game.gameContext!.realProject}
+                    distractors={game.gameContext!.distractors}
+                    mainMode={game.mainMode}
+                    duration={game.lastStandDuration}
+                    soundEnabled={game.soundEnabled}
+                    hasOracleInPlay={game.gameContext!.hasOracleActive}
+                    onResult={handleLastStandResult}
+                 />
+              )}
               {game.phase === 'RESULTS' && game.outcome && <Results outcome={game.outcome as any} players={game.players} allTimePoints={game.allTimePoints} onReset={game.resetGame} />}
               {game.phase === 'SETTINGS' && <Settings {...game} onBack={() => game.setPhase('SETUP')} onSave={(ns, ni, nw, nv) => { game.setScenarioSets(ns); game.setInquestSets(ni); game.setWordSets(nw); game.setVirusSets(nv); }} />}
               {game.phase === 'LEADERBOARD' && <Leaderboard points={game.allTimePoints} history={game.gameHistory} onBack={game.resetGame} onClear={game.clearStats} />}
