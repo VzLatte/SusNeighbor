@@ -31,7 +31,31 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ onBack }) => {
             <section className="space-y-3">
               <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-1">1. The Objective</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                A high-stakes social deduction mission. Most agents are <span className="text-indigo-400 font-bold">Neighbors</span> protecting a secret project. Infiltrating <span className="text-pink-500 font-bold">Imposters</span> receive a similar decoy. Unmask the traitors before they steal the data.
+                A high-stakes social deduction mission with refined roles. Each role has unique abilities creating complex strategic gameplay.
+
+                2. Role System
+                <span className="text-indigo-400 font-bold">Good Team:</span>
+                • <span className="text-blue-400 font-bold">Neighbor</span>: Pure deduction, protects the real project
+                • <span className="text-yellow-400 font-bold">Hunter</span>: Investigates alignment once per game, no word knowledge
+                • <span className="text-teal-400 font-bold">Seer</span>: Receives cryptic clues, not exact answers
+
+                <span className="text-red-400 font-bold">Evil Team:</span>
+                • <span className="text-red-400 font-bold">Imposter</span>: Knows the fake project, must blend in
+                • <span className="text-gray-400 font-bold">Mr. White</span>: No word knowledge, pure social deception
+
+                <span className="text-orange-400 font-bold">Saboteur</span>: Chaos agent with multiple win conditions
+
+                <span className="text-purple-400 font-bold">Mercenary</span>: True neutral, sees one player's word, chooses side
+
+                3. Game Modes
+                <span className="text-indigo-400 font-bold">PvP (Competitive)</span>: Standard competitive gameplay
+                <span className="text-teal-400 font-bold">PvE (Co-operative)</span>: Team-based virus purge missions
+
+                4. Strategic Depth
+                Each role creates unique information asymmetry and requires different playstyles:
+                - **Information Hierarchy**: Neighbor {'>'} Hunter {'>'} Seer {'>'} Imposter {'>'} Mr. White
+                - **Counterplay**: Every ability has built-in weaknesses and counter-strategies
+                - **Skill Expression**: Good players excel at deduction; evil players excel at deception
               </p>
             </section>
 
@@ -71,18 +95,6 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ onBack }) => {
                 <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-800">
                   <span className="text-xs font-black uppercase tracking-wider text-yellow-500">Mr. White</span>
                   <p className="text-[11px] mt-1 text-slate-300">Has NO word. Listen to clues and fake it. <br/><span className="text-green-500 font-bold">Win:</span> Stay hidden or guess the Real Word if voted out.</p>
-                </div>
-                <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-800">
-                  <span className="text-xs font-black uppercase tracking-wider text-purple-400">The Oracle</span>
-                  <p className="text-[11px] mt-1 text-slate-300">Knows the Imposter, but not the word. <br/><span className="text-green-500 font-bold">Win:</span> Neighbors win. (Neighbors lose if Oracle is targeted in Last Stand).</p>
-                </div>
-                <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-800">
-                  <span className="text-xs font-black uppercase tracking-wider text-orange-500">Anarchist</span>
-                  <p className="text-[11px] mt-1 text-slate-300">A chaotic agent. Acts as a false threat. <br/><span className="text-green-500 font-bold">Win:</span> Only if they are the one voted out by the group!</p>
-                </div>
-                <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-800">
-                  <span className="text-xs font-black uppercase tracking-wider text-teal-400">The Mimic</span>
-                  <p className="text-[11px] mt-1 text-slate-300">Rogue Operative. Knows nothing. <br/><span className="text-green-500 font-bold">Win:</span> Identify BOTH the Imposter and the Project Word.</p>
                 </div>
               </div>
             </section>

@@ -195,8 +195,6 @@ export type GamePhase =
   | 'INVESTMENT_REVEAL'
   | 'VOTING' 
   | 'LAST_STAND' 
-  | 'ORACLE_GUESS'
-  | 'MIMIC_GUESS'
   | 'VIRUS_GUESS'
   | 'RESULTS' 
   | 'SETTINGS'

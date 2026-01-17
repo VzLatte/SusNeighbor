@@ -23,10 +23,6 @@ export const useGameState = () => {
   const [playerNames, setPlayerNames] = useState<string[]>(Array.from({ length: MAX_PLAYERS }, (_, i) => `Agent ${i + 1}`));
   const [imposterCount, setImposterCount] = useState(1);
   const [hasMrWhite, setHasMrWhite] = useState(false);
-  const [hasAnarchist, setHasAnarchist] = useState(false);
-  const [hasMimic, setHasMimic] = useState(false); 
-  const [hasBountyHunter, setHasBountyHunter] = useState(false);
-  const [hasOracle, setHasOracle] = useState(false);
   const [includeHints, setIncludeHints] = useState(true);
   const [includeTaboo, setIncludeTaboo] = useState(false);
   const [isAuctionActive, setIsAuctionActive] = useState(false);
@@ -169,15 +165,14 @@ export const useGameState = () => {
     players.forEach(p => {
       let won = false;
       let score = 10;
-      const isImposterTeam = p.role === Role.IMPOSTER || p.role === Role.MR_WHITE || p.role === Role.MIMIC;
-      const isNeighborTeam = p.role === Role.NEIGHBOR || p.role === Role.ORACLE || p.role === Role.BOUNTY_HUNTER;
+      const isImposterTeam = p.role === Role.IMPOSTER || p.role === Role.MR_WHITE;
+      const isNeighborTeam = p.role === Role.NEIGHBOR;
 
       if (winner === 'NEIGHBORS' && isNeighborTeam) won = true;
       if (winner === 'IMPOSTERS' && isImposterTeam) {
         won = true;
         if (p.role === Role.IMPOSTER && !includeHints) score = 20; 
       }
-      if (winner === 'ANARCHIST' && p.role === Role.ANARCHIST) won = true;
       if (winner === 'HUMANS') won = true;
 
       if (won) {
@@ -273,17 +268,9 @@ export const useGameState = () => {
       
       if (roleDistributionMode === RoleDistributionMode.STANDARD) {
         if (hasMrWhite) roles.push(Role.MR_WHITE);
-        if (hasAnarchist) roles.push(Role.ANARCHIST);
-        if (hasMimic) roles.push(Role.MIMIC);
-        if (hasBountyHunter) roles.push(Role.BOUNTY_HUNTER);
-        if (hasOracle) roles.push(Role.ORACLE);
       } else {
-        const specialPool = [Role.MR_WHITE, Role.ANARCHIST, Role.BOUNTY_HUNTER, Role.MIMIC, Role.ORACLE].filter(r => {
+        const specialPool = [Role.MR_WHITE].filter(r => {
           if (r === Role.MR_WHITE) return hasMrWhite;
-          if (r === Role.ANARCHIST) return hasAnarchist;
-          if (r === Role.BOUNTY_HUNTER) return hasBountyHunter;
-          if (r === Role.MIMIC) return hasMimic;
-          if (r === Role.ORACLE) return hasOracle;
           return false;
         });
         const { specialCount } = customRoleConfig;
@@ -328,14 +315,14 @@ export const useGameState = () => {
         }
       }
 
-      const evilRoles = [Role.IMPOSTER, Role.MR_WHITE, Role.MIMIC];
+      const evilRoles = [Role.IMPOSTER, Role.MR_WHITE];
       const evilTeamCount = shuffledRoles.filter(r => evilRoles.includes(r)).length;
 
       let context: GameContext = {
         mainMode, realProject, location, category, catchRule, 
         imposterProject: includeHints ? imposterProject : '???', 
         distractors: [], includeHints, 
-        hasOracleActive: shuffledRoles.includes(Role.ORACLE), 
+        hasOracleActive: false, 
         isAuctionActive, isBlindBidding, availablePowers, evilTeamCount
       };
 
@@ -352,22 +339,12 @@ export const useGameState = () => {
           if ([Role.IMPOSTER, Role.MR_WHITE].includes(role)) { p1 = "???"; p2 = "???"; }
           else { p1 = context.dualWordsChain![prevIdx]; p2 = context.dualWordsChain![i]; }
         } else {
-          if ([Role.NEIGHBOR, Role.ANARCHIST, Role.BOUNTY_HUNTER, Role.MIMIC].includes(role)) p1 = context.realProject;
+          if ([Role.NEIGHBOR].includes(role)) p1 = context.realProject;
           else if (role === Role.IMPOSTER) p1 = context.imposterProject;
           else p1 = '???';
         }
         return { id: `p-${i + 1}`, name: playerNames[i], role, assignedProject: p1, assignedProject2: p2, inquestAnswers: [], credits: initialCredits[playerNames[i]] || 10 };
       });
-
-      const oracleIdx = finalPlayers.findIndex(p => p.role === Role.ORACLE);
-      if (oracleIdx !== -1) {
-        const p1 = finalPlayers[(oracleIdx - 1 + playerCount) % playerCount];
-        const p2 = finalPlayers[(oracleIdx - 2 + playerCount) % playerCount];
-        const getTeam = (r: Role) => [Role.IMPOSTER, Role.MR_WHITE, Role.MIMIC].includes(r) ? 'EVIL' : (r === Role.ANARCHIST ? 'ROGUE' : 'GOOD');
-        finalPlayers[oracleIdx].oracleInfo = getTeam(p1.role) === getTeam(p2.role) 
-            ? "The two players before you are on the SAME team." 
-            : "The two players before you are on DIFFERENT teams.";
-      }
 
       context.startingPlayerName = finalPlayers[Math.floor(Math.random() * finalPlayers.length)].name;
       setGameContext(context); setPlayers(finalPlayers); setCurrentPlayerIndex(0);
@@ -386,8 +363,7 @@ export const useGameState = () => {
   return {
     phase, setPhase, gameCategory, setGameCategory, playerCount, setPlayerCount,
     playerNames, setPlayerNames, imposterCount, setImposterCount,
-    hasMrWhite, setHasMrWhite, hasAnarchist, setHasAnarchist,
-    hasMimic, setHasMimic, hasBountyHunter, setHasBountyHunter, hasOracle, setHasOracle, 
+    hasMrWhite, setHasMrWhite, 
     includeHints, setIncludeHints, includeTaboo, setIncludeTaboo, 
     isAuctionActive, setIsAuctionActive, isBlindBidding, setIsBlindBidding, 
     gameMode, setGameMode, groupMode, setGroupMode, mainMode, setMainMode, 

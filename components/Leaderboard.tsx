@@ -65,7 +65,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ points, history, onBack, onCl
                       <div className={`text-[10px] font-black uppercase tracking-widest ${
                         entry.winner === 'NEIGHBORS' ? 'text-indigo-400' : 
                         entry.winner === 'IMPOSTERS' ? 'text-pink-500' : 
-                        entry.winner === 'ANARCHIST' ? 'text-orange-500' : 'text-teal-400'
+                        'text-teal-400'
                       }`}>
                         {entry.winner} Win
                       </div>

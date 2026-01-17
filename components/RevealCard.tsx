@@ -92,16 +92,12 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
     switch(displayedRole) {
       case Role.IMPOSTER: return { color: 'pink', text: 'text-pink-500', desc: "Infiltrate the group. Your project is a decoy. Blend in." };
       case Role.MR_WHITE: return { color: 'yellow', text: 'text-yellow-500', desc: "Total blackout. You have no intel. Fake it." };
-      case Role.ANARCHIST: return { color: 'orange', text: 'text-orange-500', desc: "Chaos agent. Get yourself voted out to win." };
-      case Role.MIMIC: return { color: 'teal', text: 'text-teal-500', desc: "Imposter Team. You know the REAL word. Help the Imposters." };
-      case Role.BOUNTY_HUNTER: return { color: 'cyan', text: 'text-cyan-400', desc: "Neighbor Team. You know the word. Find the Imposter. Choose carefully." };
-      case Role.ORACLE: return { color: 'purple', text: 'text-purple-400', desc: "Analyze the data below. Logic is your weapon." };
       default: return { color: 'indigo', text: 'text-indigo-400', desc: "Protect the secret project. Find the infiltrators." };
     }
   };
 
   const theme = getRoleTheme();
-  const hasIntel = [Role.NEIGHBOR, Role.ANARCHIST, Role.BOUNTY_HUNTER, Role.MIMIC].includes(player.role);
+  const hasIntel = [Role.NEIGHBOR].includes(player.role);
   const showCategory = mainMode === MainMode.TERMS || mainMode === MainMode.PAIR || mainMode === MainMode.VIRUS_PURGE;
 
   const handleBriefingRead = () => {
@@ -136,7 +132,7 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
                    <p className="text-[10px] leading-relaxed text-slate-300 font-bold">{theme.desc}</p>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-black tracking-widest text-slate-500">{player.role === Role.ORACLE ? 'CRYPTIC INTEL' : 'Mission Intel'}</label>
+                  <label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Mission Intel</label>
                   {mainMode === MainMode.PAIR && hasIntel ? (
                     <div className="space-y-2">
                         <div className="text-xl font-black text-white leading-tight">Word 1: {player.assignedProject}</div>
@@ -144,7 +140,7 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
                     </div>
                   ) : (
                     <div className={`text-xl font-black ${ (player.role === Role.MR_WHITE) ? 'blur-lg bg-slate-800 rounded px-2' : 'text-white'}`}>
-                        {player.role === Role.ORACLE ? (player.oracleInfo || "No Data") : player.assignedProject}
+                        {player.assignedProject}
                     </div>
                   )}
                 </div>
@@ -154,7 +150,7 @@ const RevealCard: React.FC<RevealCardProps> = ({ player, gameMode, mainMode, sou
                      <p className="text-[10px] text-purple-200 font-bold italic leading-tight">"{context.tabooConstraint}"</p>
                   </div>
                 )}
-                {![MainMode.TERMS, MainMode.PAIR, MainMode.VIRUS_PURGE].includes(mainMode) && player.role !== Role.ORACLE && player.role !== Role.MR_WHITE && (
+                {![MainMode.TERMS, MainMode.PAIR, MainMode.VIRUS_PURGE].includes(mainMode) && player.role !== Role.MR_WHITE && (
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Operation Site</label>
                     <div className="text-lg font-black text-slate-100">{context.location}</div>

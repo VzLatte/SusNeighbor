@@ -110,6 +110,31 @@ const Voting: React.FC<VotingProps> = ({ players, onSelect, soundEnabled }) => {
     return null;
   };
 
+  const eliminateMostVoted = () => {
+    // Count votes for each target
+    const voteCounts: { [key: string]: number } = {};
+    votes.forEach(vote => {
+      voteCounts[vote.targetId] = (voteCounts[vote.targetId] || 0) + 1;
+    });
+
+    // Find the player with the most votes
+    let maxVotes = 0;
+    let selectedPlayerId = '';
+    
+    Object.entries(voteCounts).forEach(([playerId, count]) => {
+      if (count > maxVotes) {
+        maxVotes = count;
+        selectedPlayerId = playerId;
+      }
+    });
+
+    // Find the selected player and call onSelect
+    const selectedPlayer = players.find(p => p.id === selectedPlayerId);
+    if (selectedPlayer) {
+      onSelect(selectedPlayer);
+    }
+  };
+
   const getVoteDisplay = (voterId: string, targetId: string) => {
     const voter = players.find(p => p.id === voterId);
     const target = players.find(p => p.id === targetId);
@@ -231,7 +256,7 @@ const Voting: React.FC<VotingProps> = ({ players, onSelect, soundEnabled }) => {
       {votes.every(v => v.isRevealed) && (
         <div className="space-y-3">
           <button
-            onClick={determineWinner}
+            onClick={eliminateMostVoted}
             className="w-full py-4 bg-pink-600 text-white rounded-2xl font-bold shadow-xl border-b-4 border-pink-900 active:scale-95 transition-all"
           >
             Eliminate Player

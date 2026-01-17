@@ -9,21 +9,17 @@ interface LastStandProps {
   realProject: string;
   distractors: string[];
   mainMode: MainMode;
-  onResult: (result: 'PROJECT_CORRECT' | 'PROJECT_WRONG' | 'ORACLE_CORRECT' | 'ORACLE_WRONG') => void;
+  onResult: (result: 'PROJECT_CORRECT' | 'PROJECT_WRONG') => void;
   duration: number;
   soundEnabled: boolean;
-  hasOracleInPlay: boolean;
 }
 
-const LastStand: React.FC<LastStandProps> = ({ player, allPlayers, realProject, distractors, mainMode, onResult, duration, soundEnabled, hasOracleInPlay }) => {
+const LastStand: React.FC<LastStandProps> = ({ player, allPlayers, realProject, distractors, mainMode, onResult, duration, soundEnabled }) => {
   const isImposter = player.role === Role.IMPOSTER;
   const isMrWhite = player.role === Role.MR_WHITE;
-  const isBountyHunter = player.role === Role.BOUNTY_HUNTER;
   
-  // Bounty Hunter defaults to PROJECT mode to prove innocence (or redemption)
-  const initialMode = (isImposter) ? 'ORACLE' : (hasOracleInPlay && !isBountyHunter ? 'SELECT' : 'PROJECT');
-  
-  const [guessMode, setGuessMode] = useState<'PROJECT' | 'ORACLE' | 'SELECT'>(initialMode);
+  const initialMode = 'PROJECT';
+  const [guessMode, setGuessMode] = useState<'PROJECT'>(initialMode);
   const [hasGuessed, setHasGuessed] = useState(false);
   const [seconds, setSeconds] = useState(duration);
   const [textInput, setTextInput] = useState("");
@@ -34,13 +30,12 @@ const LastStand: React.FC<LastStandProps> = ({ player, allPlayers, realProject, 
 
   const isTextInputMode = mainMode === MainMode.TERMS || mainMode === MainMode.PAIR;
 
-  const oracleCandidates = allPlayers?.filter(p => p?.id !== player?.id) || [];
 
   useEffect(() => {
     if (hasGuessed || guessMode === 'SELECT') return;
     
     if (seconds <= 0) {
-      onResult(guessMode === 'PROJECT' ? 'PROJECT_WRONG' : 'ORACLE_WRONG');
+      onResult('PROJECT_WRONG');
       return;
     }
 
@@ -62,17 +57,10 @@ const LastStand: React.FC<LastStandProps> = ({ player, allPlayers, realProject, 
     onResult(option.toLowerCase().trim() === realProject.toLowerCase().trim() ? 'PROJECT_CORRECT' : 'PROJECT_WRONG');
   };
 
-  const handleOracleGuess = (target: Player) => {
-    if (hasGuessed || !target) return;
-    if (soundEnabled) soundService.playClick();
-    setHasGuessed(true);
-    onResult(target.role === Role.ORACLE ? 'ORACLE_CORRECT' : 'ORACLE_WRONG');
-  };
 
   const getFlavorText = () => {
-    if (isBountyHunter) return "Prove your identity to save the mission.";
-    if (isImposter) return "Locate the Oracle to salvage the operation.";
-    return "Identify the target Asset to compromise the mission.";
+    if (isImposter) return "Guess the project word to survive.";
+    return "State the project word to prove your innocence.";
   };
 
   return (
@@ -96,23 +84,12 @@ const LastStand: React.FC<LastStandProps> = ({ player, allPlayers, realProject, 
       )}
 
       <div className="flex-1 flex flex-col justify-center space-y-4">
-        {guessMode === 'SELECT' && (
-          <div className="space-y-4 animate-in fade-in duration-300">
-             <button 
-               onClick={() => setGuessMode('PROJECT')}
-               className="w-full p-8 bg-indigo-600 rounded-3xl text-white font-black text-xl shadow-xl shadow-indigo-500/20 active:scale-95"
-             >
-                INTERCEPT DATA (GUESS PROJECT)
-             </button>
-             <button 
-               onClick={() => setGuessMode('ORACLE')}
-               className="w-full p-8 bg-slate-800 border-2 border-slate-700 rounded-3xl text-indigo-400 font-black text-xl active:scale-95"
-             >
-                EXPOSE THE ORACLE
-             </button>
-          </div>
-        )}
-
+        <button 
+          onClick={() => setGuessMode('PROJECT')}
+          className="w-full p-8 bg-indigo-600 rounded-3xl text-white font-black text-xl shadow-xl shadow-indigo-500/20 active:scale-95"
+        >
+               INTERCEPT DATA (GUESS PROJECT)
+        </button>
         {guessMode === 'PROJECT' && (
           isTextInputMode ? (
             <div className="space-y-4 animate-in slide-in-from-bottom duration-300">
@@ -147,37 +124,11 @@ const LastStand: React.FC<LastStandProps> = ({ player, allPlayers, realProject, 
             ))
           )
         )}
-
-        {guessMode === 'ORACLE' && (
-          <div className="grid grid-cols-2 gap-2 max-h-[40vh] overflow-y-auto pr-1 custom-scrollbar">
-            {oracleCandidates.map(p => (
-              <button 
-                key={p.id}
-                disabled={hasGuessed}
-                onClick={() => handleOracleGuess(p)}
-                className={`p-4 bg-slate-800 border-2 border-slate-700 rounded-2xl font-bold text-sm text-left transition-all ${!hasGuessed ? 'hover:border-red-500 active:scale-95' : 'opacity-50'}`}
-              >
-                {p.name}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
-      {guessMode !== 'SELECT' && isMrWhite && hasOracleInPlay && (
-        <button 
-          onClick={() => {
-            setGuessMode('SELECT');
-            setTextInput("");
-          }}
-          className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-colors"
-        >
-          Switch Strategy
-        </button>
-      )}
 
       <p className="text-center text-xs text-slate-500 font-bold uppercase tracking-widest">
-        {guessMode === 'ORACLE' ? 'Expose the spy or fail' : 'Guess the word or fail'}
+        Guess the word or fail
       </p>
     </div>
   );

@@ -24,11 +24,12 @@ Unlike static deduction games, Suspicious Neighbor uses AI to generate:
 * **Cohesive Locations:** The AI ensures the "Real Project" and "Imposter Project" share enough semantic DNA to make detection difficult.
 * **Virus Purge (PvE):** A collaborative mode where players hunt an AI-generated virus through noise-word analysis.
 
-### 2. Advanced Role Ecosystem
-Beyond Neighbors and Imposters, the engine supports:
-* **The Oracle:** Knows the Imposter but must remain hidden.
-* **The Mimic:** Can clone attributes of other roles.
-* **The Anarchist:** Wins if they are successfully eliminated by the group.
+### 2. Core Roles
+The game features a streamlined role system:
+* **Neighbors:** Know the real project word and must identify the infiltrators.
+* **Imposters:** Receive a decoy word and must blend in while sabotaging the mission.
+* **Mr. White:** Has no word and must bluff their way through the game.
+* **Special Roles:** Hunter, Seer, Saboteur, and Mercenary each bring unique mechanics to the game.
 
 ### 3. Economic Layer (The Auction)
 A unique **Credit & Bidding system** allows players to bid on "Power-Ups" or "Risk Contracts" at the start of the game, adding a layer of resource management to the social deduction.

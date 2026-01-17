@@ -67,28 +67,21 @@ const App: React.FC = () => {
     if (menuPhases.includes(game.phase)) { soundService.startBGM('MENU'); } else if (game.phase === 'MEETING') { soundService.startBGM('MEETING'); } else { soundService.stopBGM(); }
   }, [game.phase, game.musicEnabled]);
 
-  const handleLastStandResult = (result: 'PROJECT_CORRECT' | 'PROJECT_WRONG' | 'ORACLE_CORRECT' | 'ORACLE_WRONG') => {
+  const handleLastStandResult = (result: 'PROJECT_CORRECT' | 'PROJECT_WRONG') => {
     const player = game.lastEliminatedPlayer;
     if (!player || !game.gameContext) return;
 
     if (result === 'PROJECT_CORRECT') {
       if (player.role === Role.HUNTER) {
-                    game.setOutcome({ winner: 'NEIGHBORS', reason: `${player.name} (Hunter) proved their innocence by stating the word! Neighbors Win.` });
-                    game.awardPoints('NEIGHBORS', 'Hunter Redemption');
-                  } else {
-                    game.setOutcome({ winner: 'IMPOSTERS', reason: `${player.name} guessed the project! Security compromised.` });
-                    game.awardPoints('IMPOSTERS', 'Last Stand Victory');
-                  } else if (result === 'ORACLE_CORRECT') {
-      game.setOutcome({ winner: 'IMPOSTERS', reason: `${player.name} identified the Oracle! Network exposed.` });
-      game.awardPoints('IMPOSTERS', 'Oracle Assassination');
-    } else {
-      if (player.role === Role.BOUNTY_HUNTER) {
-         game.setOutcome({ winner: 'IMPOSTERS', reason: `Neighbors voted out ${player.name} (Bounty Hunter) and they failed to prove identity.` });
-         game.awardPoints('IMPOSTERS', 'Civilian Eliminated');
+        game.setOutcome({ winner: 'NEIGHBORS', reason: `${player.name} (Hunter) proved their innocence by stating the word! Neighbors Win.` });
+        game.awardPoints('NEIGHBORS', 'Hunter Redemption');
       } else {
-         game.setOutcome({ winner: 'NEIGHBORS', reason: `${player.name} failed to intercept intel. Neighbors Secure.` });
-         game.awardPoints('NEIGHBORS', 'Threat Eliminated');
+        game.setOutcome({ winner: 'IMPOSTERS', reason: `${player.name} guessed the project! Security compromised.` });
+        game.awardPoints('IMPOSTERS', 'Last Stand Victory');
       }
+    } else {
+      game.setOutcome({ winner: 'NEIGHBORS', reason: `${player.name} failed to intercept intel. Neighbors Secure.` });
+      game.awardPoints('NEIGHBORS', 'Threat Eliminated');
     }
     game.setPhase('RESULTS');
   };
@@ -153,16 +146,12 @@ const App: React.FC = () => {
                   soundEnabled={game.soundEnabled} 
                   onSelect={(selected) => { 
                     game.setLastEliminatedPlayer(selected); 
-                    if (selected.role === Role.BOUNTY_HUNTER) { 
-                      game.setOutcome({ winner: 'ANARCHIST', reason: `${selected.name} was the Anarchist! Rogue victory.` }); 
-                      game.awardPoints('ANARCHIST', 'Anarchist win'); 
-                      game.setPhase('RESULTS'); 
-                    } else if ([Role.IMPOSTER, Role.MR_WHITE, Role.HUNTER].includes(selected.role)) { 
+                    if ([Role.IMPOSTER, Role.MR_WHITE, Role.HUNTER].includes(selected.role)) { 
                       // These roles trigger Last Stand
                       game.setPhase('LAST_STAND');
                     } else if (selected.role === Role.MERCENARY) {
-                      game.setOutcome({ winner: 'NEIGHBORS', reason: `The Mimic (${selected.name}) was caught! Neighbors win.` }); 
-                      game.awardPoints('NEIGHBORS', 'Mimic Caught'); 
+                      game.setOutcome({ winner: 'NEIGHBORS', reason: `The Mercenary (${selected.name}) was caught! Neighbors win.` }); 
+                      game.awardPoints('NEIGHBORS', 'Mercenary Caught'); 
                       game.setPhase('RESULTS'); 
                     } else { 
                       game.setOutcome({ winner: 'IMPOSTERS', reason: `Eliminated ${selected.name} (Innocent). Surveillance failure.` }); 
@@ -181,7 +170,6 @@ const App: React.FC = () => {
                     mainMode={game.mainMode}
                     duration={game.lastStandDuration}
                     soundEnabled={game.soundEnabled}
-                    hasOracleInPlay={game.gameContext.hasOracleActive}
                     onResult={handleLastStandResult}
                  />
               )}

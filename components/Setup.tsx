@@ -58,7 +58,7 @@ interface SetupProps {
 }
 
 
-const FORBIDDEN_NAMES = ['neighbor', 'imposter', 'mr. white', 'mr white', 'anarchist', 'mimic', 'the mimic', 'oracle', 'the oracle', 'bounty hunter'];
+const FORBIDDEN_NAMES = ['neighbor', 'imposter', 'mr. white', 'mr white'];
 
 const Setup: React.FC<SetupProps> = (props) => {
   const [showExtraRoles, setShowExtraRoles] = useState(false);
@@ -344,7 +344,7 @@ const Setup: React.FC<SetupProps> = (props) => {
             onClick={handleExecuteMission}
             className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black text-xl shadow-xl border-b-4 border-indigo-900 active:scale-95 transition-all mt-4 relative z-10" > EXECUTE MISSION </button>
         </div>
-
+      </div>
       {/* Name Editor Modal */}
       <AnimatePresence>
         {showNameEditor && (
